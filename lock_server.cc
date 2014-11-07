@@ -27,7 +27,7 @@ lock_server::acquire(int clt, lock_protocol::lockid_t lid, int &r)
 	//int x = lid & 0xff;	
 	printf("server:acquire %016llx request from clt %d\n", lid, clt);
 	
-	if(!lock_mutex.count(lid)){
+	if(!lock_mutex.count(lid)){ //check if mutex already corresponds tto lockid
 		pthread_mutex_t mutex;
 		pthread_mutex_init(&mutex,NULL);
 		lock_mutex[lid] = mutex;	
