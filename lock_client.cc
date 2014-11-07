@@ -12,10 +12,15 @@ lock_client::lock_client(std::string dst)
 {
 	sockaddr_in dstsock;
   	make_sockaddr(dst.c_str(), &dstsock);
-  	cl = new rpcc(dstsock); //need to free, FIXME
+  	cl = new rpcc(dstsock);
   	if (cl->bind() < 0) {
     printf("lock_client: call bind\n");
   	}
+}
+
+lock_client::~lock_client()
+{
+	delete cl;
 }
 
 int
