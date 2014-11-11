@@ -22,7 +22,7 @@ int myid;
 yfs_client *yfs;
 
 int id() { 
-  return myid;
+  return myid;									
 }
 
 yfs_client::status
