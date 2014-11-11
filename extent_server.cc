@@ -50,8 +50,8 @@ int extent_server::put(extent_protocol::extentid_t id, std::string buf, int &)
 			it->second.fContent = buf;
 			time_t curTime = time(NULL);
 			it->second.fAttr.atime = curTime;
-			it->second.fAttr.mtime = curTime; //We don't need to modify creation time(ctime)
-
+			it->second.fAttr.mtime = curTime; 
+			it->second.fAttr.ctime = curTime; 
 			//Here, do we need to modify the size of rootDir?
 		}	
 		return extent_protocol::OK;		
@@ -79,7 +79,7 @@ int extent_server::put(extent_protocol::extentid_t id, std::string buf, int &)
 			time_t curTime = time(NULL);
 			it->second.dAttr.atime = curTime;
 			it->second.dAttr.mtime = curTime;
-			
+			it->second.dAttr.ctime = curTime;
 			//What is the content of Dir? What is the format of buf? 	
 		}
 		return extent_protocol::OK;
