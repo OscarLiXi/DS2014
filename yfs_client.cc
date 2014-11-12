@@ -91,5 +91,31 @@ yfs_client::getdir(inum inum, dirinfo &din)
   return r;
 }
 
-
+int create(inum parentID, inum inum, const char *name)
+{
+	int r = OK;
+	std::string dirContent;	
+	if (ec->get(parentID, dirContent) != extent_protocol::OK) {
+    	r = IOERR;
+		goto release;
+	}
+	//if it is a file, create a new file in extent server 
+	if(isfile(inum)){
+		if(ec->put(ID,std::string()) != extent_protocol::OK){
+			r = IOERR;
+			goto release;
+		}	
+	}
+	if(!dirContent.empty())
+		dirContent.append(":");
+	dirContent.append(name).append(":").append(filename(inum));
+	//append the new file or dir to its parent in extent server with its name and ID
+	if (ec->put(parentID, dirContent) != extent_protocol::OK) {
+    	r = IOERR;
+		goto release;
+	}
+	
+	release: 
+		return r;
+}
 

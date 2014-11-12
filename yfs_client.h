@@ -44,6 +44,7 @@
 
   int getfile(inum, fileinfo &);
   int getdir(inum, dirinfo &);
+  int create(inum parentID, inum fileID, const char *fileName);
 };
 
 #endif 
