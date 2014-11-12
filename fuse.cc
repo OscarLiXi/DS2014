@@ -139,6 +139,7 @@ fuseserver_createhelper(fuse_ino_t parent, const char *name,
 		return ret;
 	
 	e->ino = fileID;
+	e->attr.st_ino = fileID;
 	e->attr.st_mode = S_IFREG | 0666;
 	e->attr.st_nlink = 1;
 	e->attr.st_atime = info.atime;
@@ -264,14 +265,32 @@ void
 fuseserver_mkdir(fuse_req_t req, fuse_ino_t parent, const char *name,
      mode_t mode)
 {
-  struct fuse_entry_param e;
-
-  // You fill this in
-#if 0
+	struct fuse_entry_param e;
+	
+  	// You fill this in
+	yfs_client::status ret;
+	//RAND_MAX=7FFFFFFF
+	yfs_client::inum dirID = random(); 
+	ret = yfs->create(parent,dirID,name);
+	if(ret != yfs_client::OK){
+		fuse_reply_err(req, ENOSYS);
+		return;
+	}
+	yfs_client::fileinfo info;
+	ret = yfs->getfile(dirID,info);
+	if(ret != yfs_client::OK){
+		fuse_reply_err(req, ENOSYS);
+		return;
+	}
+	e.ino = dirID;
+	e.attr.st_ino = dirID;
+	e.attr.st_mode = S_IFREG | 0777;
+	e.attr.st_nlink = 2;
+	e.attr.st_atime = info.atime;
+	e.attr.st_mtime = info.mtime;
+	e.attr.st_ctime = info.ctime;
+	
   fuse_reply_entry(req, &e);
-#else
-  fuse_reply_err(req, ENOSYS);
-#endif
 }
 
 void
