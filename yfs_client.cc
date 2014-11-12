@@ -122,3 +122,15 @@ int yfs_client::create(inum parentID, inum inum, const char *name)
 		return r;
 }
 
+
+int yfs_client::getContent(inum inum, std::string &content)
+{
+	int r = OK;
+	if (ec->get(inum, content) != extent_protocol::OK) {
+    	r = IOERR;
+		goto release;
+	}
+
+	release: 
+		return r;
+}
