@@ -89,14 +89,32 @@ int extent_server::get(extent_protocol::extentid_t id, std::string &buf)
 
 int extent_server::getattr(extent_protocol::extentid_t id, extent_protocol::attr &a)
 {
-  // You replace this with a real implementation. We send a phony response
-  // for now because it's difficult to get FUSE to do anything (including
-  // unmount) if getattr fails.
-  a.size = 0;
-  a.atime = 0;
-  a.mtime = 0;
-  a.ctime = 0;
-  return extent_protocol::OK;
+        // You replace this with a real implementation. We send a phony response
+        // for now because it's difficult to get FUSE to do anything (including
+        // unmount) if getattr fails.
+	if (DEBUG)
+		std::cout<<"Enter extent_server::getattr"<<std::endl;
+	std::map<extent_protocol::extentid_t, struct extentInfo>::iterator it;
+	it = extents.find(id);
+	
+	if (it == extents.end()){ //No such file
+		if (DEBUG){
+			std::cout<<"ExtentServer::getattr : No such file!"<<std::endl;
+		}
+		return extent_protocol::NOENT;
+	}
+	else{
+		a = it->second.eAttr;
+		if (DEBUG){
+			std::cout<<"ExtentServer::getattr : Getattr extentid="<<id<<std::endl;
+			std::cout<<"ExtentServer::getattr : Getattr atime="<<a.atime<<std::endl;
+			std::cout<<"ExtentServer::getattr : Getattr size="<<a.size<<std::endl;
+			std::cout<<std::endl;		
+		}
+		return extent_protocol::OK;
+	}
+	
+	return extent_protocol::IOERR;
 }
 
 int extent_server::remove(extent_protocol::extentid_t id, int &)
