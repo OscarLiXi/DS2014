@@ -66,6 +66,7 @@ int extent_server::put(extent_protocol::extentid_t id, std::string buf, int &)
 
 int extent_server::get(extent_protocol::extentid_t id, std::string &buf)
 {
+	std::cout<<"Enter extent_server::get"<<std::endl;
 	std::map<extent_protocol::extentid_t, struct extentInfo>::iterator it;
 	it = extents.find(id);
 	

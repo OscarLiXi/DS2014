@@ -125,10 +125,12 @@ yfs_client::status
 fuseserver_createhelper(fuse_ino_t parent, const char *name,
      mode_t mode, struct fuse_entry_param *e)
 {
+	
   	// You fill this in
-  	yfs_client::stat ret;
+  	yfs_client::status ret;
 	yfs_client::inum fileID = random() | 0x80000000;
-	ret = yfs->create(parent,fileID,name; 
+	ret = yfs->create(parent,fileID,name); 
+	std::cout<<"createhelper: bp1"<<std::endl;
 	if(ret != yfs_client::OK)	
 		return ret;
 	e->ino = fileID;
