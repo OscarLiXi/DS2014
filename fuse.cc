@@ -125,8 +125,14 @@ yfs_client::status
 fuseserver_createhelper(fuse_ino_t parent, const char *name,
      mode_t mode, struct fuse_entry_param *e)
 {
-  // You fill this in
-  return yfs_client::NOENT;
+  	// You fill this in
+  	yfs_client::stat ret;
+	yfs_client::inum fileID = random() | 0x80000000;
+	ret = yfs->create(parent,fileID,name; 
+	if(ret != yfs_client::OK)	
+		return ret;
+	e->ino = fileID;
+	return yfs_client::OK;
 }
 
 void
