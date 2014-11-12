@@ -133,7 +133,19 @@ fuseserver_createhelper(fuse_ino_t parent, const char *name,
 	std::cout<<"createhelper: bp1"<<std::endl;
 	if(ret != yfs_client::OK)	
 		return ret;
+	yfs_client::fileinfo info;
+	ret = yfs->getfile(fileID,info);
+	if(ret != yfs_client::OK)	
+		return ret;
+	
 	e->ino = fileID;
+	e->attr.st_mode = S_IFREG | 0666;
+	e->attr.st_nlink = 1;
+	e->attr.st_atime = info.atime;
+	e->attr.st_mtime = info.mtime;
+	e->attr.st_ctime = info.ctime;
+	e->attr.st_size = info.size;
+	
 	return yfs_client::OK;
 }
 
@@ -164,7 +176,7 @@ fuseserver_lookup(fuse_req_t req, fuse_ino_t parent, const char *name)
 {
   struct fuse_entry_param e;
   bool found = false;
-
+  printf("Fuse: look up\n");
   e.attr_timeout = 0.0;
   e.entry_timeout = 0.0;
 
