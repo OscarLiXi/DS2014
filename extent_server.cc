@@ -78,6 +78,7 @@ int extent_server::get(extent_protocol::extentid_t id, std::string &buf)
 	}
 	else{
 		buf = it->second.content;
+		//Shall we modify the atime here?
 		if (DEBUG){
 			std::cout<<"ExtentServer::get : Get extentid="<<id<<", content="<<buf<<std::endl;		
 		}
@@ -105,6 +106,7 @@ int extent_server::getattr(extent_protocol::extentid_t id, extent_protocol::attr
 	}
 	else{
 		a = it->second.eAttr;
+		//Shall we modify atime here?
 		if (DEBUG){
 			std::cout<<"ExtentServer::getattr : Getattr extentid="<<id<<std::endl;
 			std::cout<<"ExtentServer::getattr : Getattr atime="<<a.atime<<std::endl;
