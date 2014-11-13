@@ -122,6 +122,7 @@ int yfs_client::create(inum parentID, inum inum, const char *name)
 		return r;
 }
 
+
 unsigned long long stringToid(std::string s) 
 {
 	int len = s.length();
@@ -174,4 +175,39 @@ int yfs_client::getDirContent(inum inum, std::vector<std::pair<std::string, unsi
 	dirContent.push_back(std::make_pair(tempName, id));
 
 	return r;
+}
+
+/*int yfs_client::getContent(inum inum, std::string &content)
+{
+	int r = OK;
+	if (ec->get(inum, content) != extent_protocol::OK) {
+    	r = IOERR;
+		goto release;
+	}
+
+	release: 
+		return r;
+}*/
+yfs_client::inum yfs_client::ilookup(inum parentID, std::string name)
+{
+	std::string dirContent;
+	if(ec->get(parentID, dirContent) != extent_protocol::OK){
+		return 0;
+	}	
+	//search name in the string dirContent
+	std::string::size_type head, tail; //head and tail of id substring in dirContent
+	std::string id_str;
+	std::string content_cp = std::string(dirContent);
+	std::string name_cp = std::string(name);
+	content_cp.append(":");
+	name_cp.append(":");
+	head = content_cp.find(name_cp,0);
+	if(head==std::string::npos){
+		printf("yfs_client::ilookup(): No matches\n");
+		return 0;
+	}
+	head += name_cp.size();
+	tail = content_cp.find(":",head);
+	id_str = content_cp.substr(head,tail-head);
+	return n2i(id_str);
 }
