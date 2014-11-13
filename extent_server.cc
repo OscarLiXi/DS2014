@@ -17,6 +17,7 @@ extent_server::extent_server() {
 	rootDir.eAttr.mtime = curTime;
 	rootDir.eAttr.ctime = curTime;
 	rootDir.eAttr.size = 0; //We simply ignore the size of a dir
+	rootDir.content = "";
 	extents.insert(std::pair<extent_protocol::extentid_t, struct extentInfo>(1, rootDir));
 }
 

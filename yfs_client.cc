@@ -151,6 +151,11 @@ int yfs_client::getDirContent(inum inum, std::vector<std::pair<std::string, unsi
 	std::string symbol (":");
 	std::string tempName;
 
+	if (content.find(symbol) == std::string::npos)
+	{
+		return r;
+	}
+
 	while(end < contentLength){
 		size_t pos = content.find(symbol, begin);
 		if (pos == std::string::npos)
