@@ -145,7 +145,7 @@ fuseserver_createhelper(fuse_ino_t parent, const char *name,
 	ret = yfs->getfile(fileID,info);
 	if(ret != yfs_client::OK)	
 		return ret;
-	
+	//reply the attribute of the file/dir to FUSE	
 	e->ino = fileID;
 	e->attr.st_ino = fileID;
 	e->attr.st_mode = S_IFREG | 0666;
@@ -190,7 +190,6 @@ void
 fuseserver_lookup(fuse_req_t req, fuse_ino_t parent, const char *name)
 {
   	struct fuse_entry_param e;
-  	printf("Fuse: look up\n");
   	e.attr_timeout = 0.0;
   	e.entry_timeout = 0.0;
 
@@ -205,6 +204,7 @@ fuseserver_lookup(fuse_req_t req, fuse_ino_t parent, const char *name)
 		fuse_reply_err(req,ENOENT);
 		return;
 	}
+	//if it is a file
 	if(yfs->isfile(inum)){
      	yfs_client::fileinfo info;
      	if(yfs->getfile(inum, info) != yfs_client::OK){
@@ -219,6 +219,7 @@ fuseserver_lookup(fuse_req_t req, fuse_ino_t parent, const char *name)
      	e.attr.st_ctime = info.ctime;
      	e.attr.st_size = info.size;
    	} 
+	//if it is a directory
 	else {
      	yfs_client::dirinfo info;
      	if(yfs->getdir(inum, info) != yfs_client::OK){
@@ -309,7 +310,7 @@ void
 fuseserver_open(fuse_req_t req, fuse_ino_t ino,
      struct fuse_file_info *fi)
 {
-  	// You fill this in
+  	// check if it is a file
 	if(yfs->isdir(ino))  
   		fuse_reply_err(req, ENOSYS);
   	fuse_reply_open(req, fi);
@@ -321,7 +322,6 @@ fuseserver_mkdir(fuse_req_t req, fuse_ino_t parent, const char *name,
      mode_t mode)
 {
 	struct fuse_entry_param e;
-	printf("In fuse.cc mkdir()\n");	
   	// You fill this in
 	yfs_client::status ret;
 	//RAND_MAX=7FFFFFFF
