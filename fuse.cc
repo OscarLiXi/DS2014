@@ -256,6 +256,7 @@ void
 fuseserver_readdir(fuse_req_t req, fuse_ino_t ino, size_t size,
           off_t off, struct fuse_file_info *fi)
 {
+  //std::cout<<"fuseserver_readdir: bp1"<<std::endl;
   yfs_client::inum inum = ino; // req->in.h.nodeid;
   struct dirbuf b;
   yfs_client::dirent e;
@@ -271,7 +272,22 @@ fuseserver_readdir(fuse_req_t req, fuse_ino_t ino, size_t size,
 
 
    // fill in the b data structure using dirbuf_add
+	yfs_client::status ret;
+	std::vector<std::pair<std::string, unsigned long long> > dirContent;
+	ret = yfs->getDirContent(ino, dirContent);
+	if (ret != yfs_client::OK){
+		return;
+	}
 
+	while(!dirContent.empty())
+	{
+		std::pair<std::string, unsigned long long> output = dirContent.back();
+		dirContent.pop_back();
+		dirbuf_add(&b, output.first.c_str(), output.second);
+		//std::cout<<"Name: "<<output.first<<std::endl;
+		//std::cout<<"Id: "<<output.second<<std::endl;
+		//std::cout<<std::endl;
+	}
 
    reply_buf_limited(req, b.p, b.size, off, size);
    free(b.p);
