@@ -321,7 +321,7 @@ fuseserver_mkdir(fuse_req_t req, fuse_ino_t parent, const char *name,
      mode_t mode)
 {
 	struct fuse_entry_param e;
-	
+	printf("In fuse.cc mkdir()\n");	
   	// You fill this in
 	yfs_client::status ret;
 	//RAND_MAX=7FFFFFFF
@@ -339,13 +339,13 @@ fuseserver_mkdir(fuse_req_t req, fuse_ino_t parent, const char *name,
 	}
 	e.ino = dirID;
 	e.attr.st_ino = dirID;
-	e.attr.st_mode = S_IFREG | 0777;
+	e.attr.st_mode = S_IFDIR | 0777;
 	e.attr.st_nlink = 2;
 	e.attr.st_atime = info.atime;
 	e.attr.st_mtime = info.mtime;
 	e.attr.st_ctime = info.ctime;
 	
-  fuse_reply_entry(req, &e);
+  	fuse_reply_entry(req, &e);
 }
 
 void
