@@ -18,6 +18,8 @@
 #include <arpa/inet.h>
 #include "yfs_client.h"
 
+#define DEBUG 0
+
 int myid;
 yfs_client *yfs;
 
@@ -33,7 +35,9 @@ getattr(yfs_client::inum inum, struct stat &st)
   bzero(&st, sizeof(st));
 
   st.st_ino = inum;
+
   printf("getattr %016llx %d\n", inum, yfs->isfile(inum));
+	
   if(yfs->isfile(inum)){
      yfs_client::fileinfo info;
      ret = yfs->getfile(inum, info);
@@ -45,7 +49,8 @@ getattr(yfs_client::inum inum, struct stat &st)
      st.st_mtime = info.mtime;
      st.st_ctime = info.ctime;
      st.st_size = info.size;
-     printf("   getattr -> %llu\n", info.size);
+     if (DEBUG)
+     	printf("   getattr -> %llu\n", info.size);
    } else {
      yfs_client::dirinfo info;
      ret = yfs->getdir(inum, info);
@@ -56,7 +61,8 @@ getattr(yfs_client::inum inum, struct stat &st)
      st.st_atime = info.atime;
      st.st_mtime = info.mtime;
      st.st_ctime = info.ctime;
-     printf("   getattr -> %lu %lu %lu\n", info.atime, info.mtime, info.ctime);
+     if (DEBUG)
+     	printf("   getattr -> %lu %lu %lu\n", info.atime, info.mtime, info.ctime);
    }
    return yfs_client::OK;
 }
@@ -81,6 +87,7 @@ fuseserver_getattr(fuse_req_t req, fuse_ino_t ino,
 void
 fuseserver_setattr(fuse_req_t req, fuse_ino_t ino, struct stat *attr, int to_set, struct fuse_file_info *fi)
 {
+
   printf("fuseserver_setattr 0x%x\n", to_set);
   if (FUSE_SET_ATTR_SIZE & to_set) {
     printf("   fuseserver_setattr set size to %zu\n", attr->st_size);
@@ -130,7 +137,8 @@ fuseserver_createhelper(fuse_ino_t parent, const char *name,
   	yfs_client::status ret;
 	yfs_client::inum fileID = random() | 0x80000000;
 	ret = yfs->create(parent,fileID,name); 
-	std::cout<<"createhelper: bp1"<<std::endl;
+	if (DEBUG)
+		std::cout<<"createhelper: bp1"<<std::endl;
 	if(ret != yfs_client::OK)	
 		return ret;
 	yfs_client::fileinfo info;
@@ -156,7 +164,8 @@ fuseserver_create(fuse_req_t req, fuse_ino_t parent, const char *name,
 {
   struct fuse_entry_param e;
   if( fuseserver_createhelper( parent, name, mode, &e ) == yfs_client::OK ) {
-    std::cout<<"fuseserver_create: bp1"<<std::endl;
+    if (DEBUG)
+    	std::cout<<"fuseserver_create: bp1"<<std::endl;
     fuse_reply_create(req, &e, fi);
   } else {
     fuse_reply_err(req, ENOENT);
@@ -167,9 +176,11 @@ void fuseserver_mknod( fuse_req_t req, fuse_ino_t parent,
     const char *name, mode_t mode, dev_t rdev ) {
   struct fuse_entry_param e;
   if( fuseserver_createhelper( parent, name, mode, &e ) == yfs_client::OK ) {
-    std::cout<<"fuseserver_mknod: bp1"<<std::endl;
+    if (DEBUG)
+    	std::cout<<"fuseserver_mknod: bp1"<<std::endl;
     fuse_reply_entry(req, &e);
-    std::cout<<"fuseserver_mknod: bp2"<<std::endl;
+    //if (DEBUG)
+    //	std::cout<<"fuseserver_mknod: bp2"<<std::endl;
   } else {
     fuse_reply_err(req, ENOENT);
   }

@@ -8,7 +8,7 @@
 #include "extent_protocol.h"
 
 #define IS_FILE 0x80000000
-#define DEBUG 1
+#define DEBUG 0
 
 class extent_server {
  public:
