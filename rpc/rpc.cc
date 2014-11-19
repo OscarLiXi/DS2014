@@ -191,7 +191,6 @@ rpcc::call1(unsigned int proc, marshall &req, unmarshall &rep,
 	connection *ch = NULL;
 
 	while (1) {
-
 		if (transmit) {
 			get_refconn(&ch);
 			if (ch) {
@@ -199,6 +198,7 @@ rpcc::call1(unsigned int proc, marshall &req, unmarshall &rep,
 				jsl_log(JSL_DBG_2, 
 						"rpcc::call1 %u just sent req proc %x xid %u clt_nonce %d\n", 
 						clt_nonce_, proc, ca.xid, clt_nonce_); 
+
 			}
 			transmit = false; //only send once on a given channel
 		}
@@ -225,7 +225,7 @@ rpcc::call1(unsigned int proc, marshall &req, unmarshall &rep,
 
 		if (retrans_ && (!ch || ch->isdead())) {
 			//since connection is dead, we retransmit on the new connection 
-			transmit = true; 
+			transmit = true;
 		}
 		curr_to.to <<= 1;
 	}
@@ -336,6 +336,7 @@ compress:
 		while (xid_rep_window_.front() + 1 == *it)
 			xid_rep_window_.pop_front();
 	}
+
 }
 
 
@@ -562,6 +563,18 @@ rpcs::add_reply(unsigned int clt_nonce, unsigned int xid,
 		char *b, int sz)
 {
 	ScopedLock rwl(&reply_window_m_);
+	//all clt_nonces are added into reply_window at displatch()
+	std::list<reply_t> &reply_list = reply_window_[clt_nonce];
+	std::list<reply_t>::iterator it;
+	for(it = reply_list.begin();it != reply_list.end(); it++){
+		//all xids are added into reply_list at checkduplicate_and_update()
+		if((*it).xid == xid){
+			(*it).buf = b;
+			(*it).sz = sz;
+			(*it).cb_present = true;
+		}
+	}
+	
 }
 
 void
@@ -585,8 +598,49 @@ rpcs::checkduplicate_and_update(unsigned int clt_nonce, unsigned int xid,
 		unsigned int xid_rep, char **b, int *sz)
 {
 	ScopedLock rwl(&reply_window_m_);
-
-	return NEW;
+	//All the new clt_nonce has been added to reply_window before in dispatch()
+	std::list<reply_t> &reply_list = reply_window_[clt_nonce];//result of requiry in server currently
+	if(!reply_list.size()){
+		//add xid, but cb_present=false, such that we could know it is in progress or DONE
+		reply_list.push_back(reply_t(xid));
+		return NEW;
+	}
+	//delete and check xid exist in the list
+	bool is_exist = false;
+	std::list<reply_t>::iterator it, it_xid;
+	it = reply_list.begin();
+	while(it != reply_list.end()){
+		//find the iterator of xid
+		if((*it).xid == xid && (xid > xid_rep)){//xid_rep->last xid server receive
+			is_exist = true;
+			it_xid = it;
+		}
+		if((*it).xid <= xid_rep){
+			free((*it).buf);
+			it = reply_list.erase(it);
+		}
+		else	it++;
+	}
+	if(is_exist){
+		//DONE
+		if((*it_xid).cb_present){
+			*b = (*it_xid).buf;
+			*sz = (*it_xid).sz;
+			return DONE;
+		}
+		else
+			return INPROGRESS; //Server is processing the requiry
+	}
+	//Non exist means this xid is forgotten or it is new
+	else{
+		if(xid <= xid_rep)
+			return FORGOTTEN;
+		else{
+			//add xid, but cb_present=false, such that we could know it is in progress or DONE
+			reply_list.push_back(reply_t(xid));
+			return NEW;
+		}		
+	}
 }
 
 //rpc handler
