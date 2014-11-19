@@ -88,7 +88,7 @@ void
 fuseserver_setattr(fuse_req_t req, fuse_ino_t ino, struct stat *attr, int to_set, struct fuse_file_info *fi)
 {
 	
-	yfs::client::status ret;
+	yfs_client::status ret;
 	printf("fuseserver_setattr 0x%x\n", to_set);
 	//only consider to change the size attribute
   	if (FUSE_SET_ATTR_SIZE & to_set) {
@@ -97,7 +97,7 @@ fuseserver_setattr(fuse_req_t req, fuse_ino_t ino, struct stat *attr, int to_set
     	struct stat st;
 		
 		yfs_client::fileinfo info;
-		info.size = attr.size;
+		info.size = attr->st_size;
     	ret = yfs->setattr(ino,info);		
 		
 		if(ret != yfs_client::OK){
@@ -105,7 +105,7 @@ fuseserver_setattr(fuse_req_t req, fuse_ino_t ino, struct stat *attr, int to_set
 			return;
 		}
 		
-		ret = yfs->getfile(inum, info);
+		ret = yfs->getfile(ino, info);
 		if(ret != yfs_client::OK){
 			fuse_reply_err(req, ENOSYS);
 			return;

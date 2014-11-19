@@ -225,7 +225,7 @@ int yfs_client::setattr(inum fileID, fileinfo fin)
   	printf("setattr %016llx\n", fileID);
   	extent_protocol::attr a;
   	a.size = fin.size;
-  	if (ec->setattr(inum, fin) != extent_protocol::OK) {
+  	if (ec->setattr(fileID, a) != extent_protocol::OK) {
     	r = IOERR;
     	goto release;
   	}
