@@ -48,6 +48,11 @@
   int create(inum parentID, inum fileID, const char *fileName);
 
   int getDirContent(inum inum, std::vector<std::pair<std::string, unsigned long long> > &dirContent);
+  inum ilookup(inum di, std::string name);
+
+  int getfile(inum, fileinfo &);
+  int getdir(inum, dirinfo &);
+  int create(inum parentID, inum fileID, const char *fileName);
 };
 
 #endif 
