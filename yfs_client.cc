@@ -233,5 +233,26 @@ int yfs_client::setattr(inum fileID, fileinfo fin)
  release: 
 	return r;	
 	
-
 }
+
+int yfs_client::write(inum fileID, std::string buf, int off)
+{
+	int r = OK;
+	std::string content;
+	if(ec->get(fileID,content) != extent_protocol::OK){
+		r = IOERR;
+		goto release;
+	}
+	content.insert(off, buf);
+	if(ec->put(fileID,content) != extent_protocol::OK){
+		r = IOERR;
+		goto release;
+	}		
+release: 
+	return r;
+}
+
+
+
+
+
