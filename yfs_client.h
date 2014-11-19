@@ -42,6 +42,7 @@
   bool isdir(inum);
   inum ilookup(inum parentID, std::string name);
 
+  int setattr(inum, fileinfo);
   int getfile(inum, fileinfo &);
   int getdir(inum, dirinfo &);
   int getContent(inum inum, std::string &content);

@@ -87,20 +87,41 @@ fuseserver_getattr(fuse_req_t req, fuse_ino_t ino,
 void
 fuseserver_setattr(fuse_req_t req, fuse_ino_t ino, struct stat *attr, int to_set, struct fuse_file_info *fi)
 {
+	
+	yfs::client::status ret;
+	printf("fuseserver_setattr 0x%x\n", to_set);
+	//only consider to change the size attribute
+  	if (FUSE_SET_ATTR_SIZE & to_set) {
+    	
+		printf("   fuseserver_setattr set size to %zu\n", attr->st_size);
+    	struct stat st;
+		
+		yfs_client::fileinfo info;
+		info.size = attr.size;
+    	ret = yfs->setattr(ino,info);		
+		
+		if(ret != yfs_client::OK){
+			fuse_reply_err(req, ENOSYS);
+			return;
+		}
+		
+		ret = yfs->getfile(inum, info);
+		if(ret != yfs_client::OK){
+			fuse_reply_err(req, ENOSYS);
+			return;
+		}
 
-  printf("fuseserver_setattr 0x%x\n", to_set);
-  if (FUSE_SET_ATTR_SIZE & to_set) {
-    printf("   fuseserver_setattr set size to %zu\n", attr->st_size);
-    struct stat st;
-    // You fill this in
-#if 0
-    fuse_reply_attr(req, &st, 0);
-#else
-    fuse_reply_err(req, ENOSYS);
-#endif
-  } else {
-    fuse_reply_err(req, ENOSYS);
-  }
+		st.st_mode = S_IFREG | 0666;
+		st.st_nlink = 1;
+		st.st_atime = info.atime;
+		st.st_mtime = info.mtime;
+		st.st_ctime = info.ctime;
+		st.st_size = info.size;
+    	fuse_reply_attr(req, &st, 0);
+  	}
+  	else{
+		fuse_reply_err(req, ENOSYS);
+  	}
 }
 
 void

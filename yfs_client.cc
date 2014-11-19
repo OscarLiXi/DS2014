@@ -216,3 +216,22 @@ yfs_client::inum yfs_client::ilookup(inum parentID, std::string name)
 	id_str = content_cp.substr(head,tail-head);
 	return n2i(id_str);
 }
+
+int yfs_client::setattr(inum fileID, fileinfo fin)
+{
+	
+	int r = OK;
+
+  	printf("setattr %016llx\n", fileID);
+  	extent_protocol::attr a;
+  	a.size = fin.size;
+  	if (ec->setattr(inum, fin) != extent_protocol::OK) {
+    	r = IOERR;
+    	goto release;
+  	}
+  
+ release: 
+	return r;	
+	
+
+}
