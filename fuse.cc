@@ -89,7 +89,8 @@ fuseserver_setattr(fuse_req_t req, fuse_ino_t ino, struct stat *attr, int to_set
 {
 	
 	yfs_client::status ret;
-	printf("fuseserver_setattr 0x%x\n", to_set);
+	if (DEBUG)
+		printf("fuseserver_setattr 0x%x\n", to_set);
 	//only consider to change the size attribute
   	if (FUSE_SET_ATTR_SIZE & to_set) {
     	
@@ -128,12 +129,26 @@ void
 fuseserver_read(fuse_req_t req, fuse_ino_t ino, size_t size,
       off_t off, struct fuse_file_info *fi)
 {
+	if (DEBUG)
+		std::cout<<"Enter fuseserver_read."<<std::endl;
+	yfs_client::status ret;
+	std::string retString;
+    	ret = yfs->read(ino, size, off, retString);		
+	if(ret != yfs_client::OK){
+		fuse_reply_err(req, ENOSYS);
+		return;
+	}
+	char* buf = new char [size];
+	strcpy(buf, retString.c_str()); //copy read content to buf
+
+	fuse_reply_buf(req, buf, size);
+	delete[] buf;
   // You fill this in
-#if 0
-  fuse_reply_buf(req, buf, size);
-#else
-  fuse_reply_err(req, ENOSYS);
-#endif
+//#if 1
+//  fuse_reply_buf(req, buf, size);
+//#else
+//  fuse_reply_err(req, ENOSYS);
+//#endif
 }
 
 void

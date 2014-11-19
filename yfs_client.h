@@ -49,6 +49,8 @@
   int create(inum parentID, inum fileID, const char *fileName);
 
   int getDirContent(inum inum, std::vector<std::pair<std::string, unsigned long long> > &dirContent);
+
+  int read(inum, size_t, off_t, std::string &);
 };
 
 #endif 
