@@ -18,7 +18,7 @@
 #include <arpa/inet.h>
 #include "yfs_client.h"
 
-#define DEBUG 0
+#define DEBUG 1
 
 int myid;
 yfs_client *yfs;
@@ -139,10 +139,12 @@ fuseserver_read(fuse_req_t req, fuse_ino_t ino, size_t size,
 		return;
 	}
 	size = retString.size();
-	char* buf = new char [size];
-	strcpy(buf, retString.c_str()); //copy read content to buf
+	//char* buf = new char [size + 1];
+	//strcpy(buf, retString.c_str()); //copy read content to buf
 
-	fuse_reply_buf(req, buf, size);
+	fuse_reply_buf(req, retString.c_str(), size);
+
+	printf("End of fuseserver_read\n");
 	//delete[] buf;
   // You fill this in
 //#if 1
@@ -204,10 +206,12 @@ void
 fuseserver_create(fuse_req_t req, fuse_ino_t parent, const char *name,
    mode_t mode, struct fuse_file_info *fi)
 {
+    if (DEBUG)
+    	std::cout<<"fuseserver_create: bp1"<<std::endl;
   struct fuse_entry_param e;
   if( fuseserver_createhelper( parent, name, mode, &e ) == yfs_client::OK ) {
     if (DEBUG)
-    	std::cout<<"fuseserver_create: bp1"<<std::endl;
+    	std::cout<<"fuseserver_create: bp2"<<std::endl;
     fuse_reply_create(req, &e, fi);
   } else {
     fuse_reply_err(req, ENOENT);
