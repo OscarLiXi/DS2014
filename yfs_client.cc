@@ -105,17 +105,6 @@ int yfs_client::create(inum parentID, inum inum, const char *name)
 	//if it is a file, create a new file in extent server 
 	if(isfile(inum)){
 		if(ec->put(inum,std::string()) != extent_protocol::OK){
-int create(inum parentID, inum inum, const char *name)
-{
-	int r = OK;
-	std::string dirContent;	
-	if (ec->get(parentID, dirContent) != extent_protocol::OK) {
-    	r = IOERR;
-		goto release;
-	}
-	//if it is a file, create a new file in extent server 
-	if(isfile(inum)){
-		if(ec->put(ID,std::string()) != extent_protocol::OK){
 			r = IOERR;
 			goto release;
 		}	
