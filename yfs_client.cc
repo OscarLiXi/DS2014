@@ -264,7 +264,7 @@ int yfs_client::setattr(inum fileID, fileinfo fin)
 
 int yfs_client::write(inum fileID, std::string buf, int off)
 {
-	int r = OK;
+	int r = OK, size;
 	std::string content;
 	if(ec->get(fileID,content) != extent_protocol::OK){
 		r = IOERR;
@@ -273,6 +273,8 @@ int yfs_client::write(inum fileID, std::string buf, int off)
 	
 	std::cout << "yfs_client::write():before insert, content=" << content << std::endl;
 	std::cout << "yfs_client::write(): off=" << off << "buf= " << buf << std::endl;
+	size = buf.size();
+	off = (off > size) ? size : off; 
 	content.insert(off, buf);
 	std::cout << "yfs_client::write(): after insert, content=" << content << std::endl;
 	if(ec->put(fileID,content) != extent_protocol::OK){
