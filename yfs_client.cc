@@ -208,12 +208,18 @@ int yfs_client::read(inum inum, size_t readSize, off_t offset, std::string &retS
 	size_t length = content.size();
 	printf("length: %d\n", length);
 	//readSize could be larger than length
-	//if (readSize > length || offset > length || readSize < 0 || offset < 0){
-	//	printf("yfs_Client::read : size or offset error\n");
-	//	r = IOERR;
-	//	return r;
-	//}
+	if (readSize < 0 || offset < 0){
+		printf("yfs_Client::read : size or offset error\n");
+		r = IOERR;
+		return r;
+	}
 
+	if (offset > length){ // return "\0"
+		retString = '\0';
+		return r;
+		std::cout<<"read content = "<<retString<<std::endl;		
+	}
+	
 	retString = content.substr(offset, readSize);
 	std::cout<<"read content = "<<retString<<std::endl;
 	return r;
