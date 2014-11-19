@@ -24,6 +24,9 @@ extent_server::extent_server() {
 
 int extent_server::put(extent_protocol::extentid_t id, std::string buf, int &)
 {
+
+	if (DEBUG)
+		std::cout<<"Enter extent_server::put"<<std::endl;
 	if (buf.size() > extent_protocol::maxextent)
 		return extent_protocol::FBIG; //Exceed the maximun size
 	

@@ -138,11 +138,12 @@ fuseserver_read(fuse_req_t req, fuse_ino_t ino, size_t size,
 		fuse_reply_err(req, ENOSYS);
 		return;
 	}
+	size = retString.size();
 	char* buf = new char [size];
 	strcpy(buf, retString.c_str()); //copy read content to buf
 
 	fuse_reply_buf(req, buf, size);
-	delete[] buf;
+	//delete[] buf;
   // You fill this in
 //#if 1
 //  fuse_reply_buf(req, buf, size);
@@ -166,7 +167,6 @@ fuseserver_write(fuse_req_t req, fuse_ino_t ino,
 	}
  
 	fuse_reply_write(req, size);
-  	fuse_reply_err(req, ENOSYS);
 
 }
 

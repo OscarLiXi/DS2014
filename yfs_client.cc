@@ -197,6 +197,7 @@ int yfs_client::getDirContent(inum inum, std::vector<std::pair<std::string, unsi
 int yfs_client::read(inum inum, size_t readSize, off_t offset, std::string &retString)
 {
 	printf("Enter yfs_Client::read\n");
+	printf("readSize: %d, offset: %d\n", readSize, offset);
 	int r = OK;
 	std::string content;
 	if (ec->get(inum, content) != extent_protocol::OK) {
@@ -205,14 +206,16 @@ int yfs_client::read(inum inum, size_t readSize, off_t offset, std::string &retS
 	}
 	
 	size_t length = content.size();
-	if (readSize > length || offset > length || readSize < 0 || offset < 0){
-		printf("yfs_Client::read : size or offset error\n");
-		r = IOERR;
-		return r;
-	}
+	printf("length: %d\n", length);
+	//readSize could be larger than length
+	//if (readSize > length || offset > length || readSize < 0 || offset < 0){
+	//	printf("yfs_Client::read : size or offset error\n");
+	//	r = IOERR;
+	//	return r;
+	//}
 
 	retString = content.substr(offset, readSize);
-
+	std::cout<<"read content = "<<retString<<std::endl;
 	return r;
 }
 
