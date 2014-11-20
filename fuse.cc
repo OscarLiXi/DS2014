@@ -18,7 +18,7 @@
 #include <arpa/inet.h>
 #include "yfs_client.h"
 
-#define DEBUG 1
+#define DEBUG 0
 
 int myid;
 yfs_client *yfs;

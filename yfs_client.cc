@@ -197,7 +197,7 @@ int yfs_client::getDirContent(inum inum, std::vector<std::pair<std::string, unsi
 int yfs_client::read(inum inum, size_t readSize, off_t offset, std::string &retString)
 {
 	printf("Enter yfs_Client::read\n");
-	printf("readSize: %d, offset: %d\n", readSize, offset);
+	//printf("readSize: %d, offset: %d\n", readSize, offset);
 	int r = OK;
 	std::string content;
 	if (ec->get(inum, content) != extent_protocol::OK) {
@@ -221,7 +221,7 @@ int yfs_client::read(inum inum, size_t readSize, off_t offset, std::string &retS
 	}
 	
 	retString = content.substr(offset, readSize);
-	std::cout<<"read content = "<<retString<<std::endl;
+	//std::cout<<"read content = "<<retString<<std::endl;
 	return r;
 }
 
@@ -277,14 +277,14 @@ int yfs_client::write(inum fileID, std::string buf, int size, int off)
 		goto release;
 	}
 	
-	std::cout << "yfs_client::write():before insert, content=" << content << std::endl;
-	std::cout << "yfs_client::write(): off=" << off << "buf= " << buf << std::endl;
+	//std::cout << "yfs_client::write():before insert, content=" << content << std::endl;
+	//std::cout << "yfs_client::write(): off=" << off << "buf= " << buf << std::endl;
 	content_size = content.size();
 	if(off >= content_size )
 		content.append(buf.substr(0, size));
 	else	
 		content.replace(off,size,  buf.substr(0,size));
-	std::cout << "yfs_client::write(): after insert, content=" << content << std::endl;
+	//std::cout << "yfs_client::write(): after insert, content=" << content << std::endl;
 	if(ec->put(fileID,content) != extent_protocol::OK){
 		r = IOERR;
 		goto release;
