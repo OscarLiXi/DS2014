@@ -161,8 +161,9 @@ fuseserver_write(fuse_req_t req, fuse_ino_t ino,
 {
   	// You fill this in
 	yfs_client::status ret;
+	printf("fuse.cc: write_size = %d, buf_size = %d\n",size,strlen(buf));
 	printf("fuse.cc: write %s \n", buf);	
-	ret = yfs->write(ino,buf,off);
+	ret = yfs->write(ino,buf,size,off);
 	if(ret != yfs_client::OK){
 		fuse_reply_err(req, ENOSYS);
 		return;

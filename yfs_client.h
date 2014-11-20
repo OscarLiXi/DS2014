@@ -42,7 +42,7 @@
   bool isdir(inum);
   inum ilookup(inum parentID, std::string name);
   
-  int write(inum fileID, std::string buf, int off );  
+  int write(inum fileID, std::string buf,int size,  int off );  
   int setattr(inum fileID, fileinfo fin);
   int getfile(inum fileID, fileinfo &fin);
   int getdir(inum, dirinfo &dirID);
