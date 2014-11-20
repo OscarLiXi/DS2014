@@ -214,10 +214,10 @@ int yfs_client::read(inum inum, size_t readSize, off_t offset, std::string &retS
 		return r;
 	}
 
-	if (offset > length){ // return "\0"
-		retString = '\0';
-		return r;
-		std::cout<<"read content = "<<retString<<std::endl;		
+	if (offset >= length){ // return "\0"
+		retString = "";
+		std::cout<<"read content = "<<retString<<std::endl;
+		return r;				
 	}
 	
 	retString = content.substr(offset, readSize);
