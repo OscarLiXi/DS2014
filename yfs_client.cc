@@ -109,7 +109,7 @@ int yfs_client::create(inum parentID, inum inum, const char *name)
 	}	
 	if(!dirContent.empty())
 		dirContent.append(":");
-	dirContent.append(name).append(":").append(filename(inum));
+	dirContent.append(name).append(":").append(filename(inum)).append(":");
 	//append the new file or dir to its parent in extent server with its name and ID
 	if (ec->put(parentID, dirContent) != extent_protocol::OK) {
     	r = IOERR;
@@ -235,7 +235,7 @@ yfs_client::inum yfs_client::ilookup(inum parentID, std::string name)
 	std::string id_str;
 	std::string content_cp = std::string(dirContent);
 	std::string name_cp = std::string(name);
-	content_cp.append(":");
+	//content_cp.append(":");
 	name_cp.append(":");
 	head = content_cp.find(name_cp,0);
 	if(head==std::string::npos){
@@ -303,12 +303,13 @@ int yfs_client::removeFile(inum parentID, std::string fileName)
 	//search file in dirContent
 	content_cp = std::string(dirContent);
 	name_cp = std::string(fileName);
-	content_cp.append(":");
+	//content_cp.append(":");
 	name_cp.append(":");
 	head = content_cp.find(name_cp,0);
+	printf("!!!!!!!!before remove");
 	printf("yfs_client::remove():");
-	std::cout << "dirContent: "<< content_cp << std::endl;
-	std::cout << "file_name: " << name_cp << std::endl;	
+	std::cout << "dirContent: "<< dirContent << std::endl;
+	std::cout << "file_name: " << fileName << std::endl;	
 	if(head==std::string::npos){
 		printf("yfs_client::removeFile(): No such file\n");
 		return NOENT;
@@ -319,7 +320,12 @@ int yfs_client::removeFile(inum parentID, std::string fileName)
 	fileID = n2i(id_str);
 	
 	//remove it from dirContent
+	//check if it is the last id in the string
 	dirContent.erase(head,tail-head+1);
+	
+	printf("!!!!!!!!after remove");
+	printf("yfs_client::remove():");
+	std::cout << "dirContent: "<< dirContent << std::endl;
 	//remove it from extent_server
 	if(ec->remove(fileID) != extent_protocol::OK){
 		return IOERR;
