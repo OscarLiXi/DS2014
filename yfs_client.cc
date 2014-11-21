@@ -103,13 +103,10 @@ int yfs_client::create(inum parentID, inum inum, const char *name)
 		goto release;
 	}
 		//std::cout<<"yfs_client::create: bp3"<<std::endl;
-	//if it is a file, create a new file in extent server 
-	if(isfile(inum)){
-		if(ec->put(inum,std::string()) != extent_protocol::OK){
-			r = IOERR;
-			goto release;
-		}	
-	}
+	if(ec->put(inum,std::string()) != extent_protocol::OK){
+		r = IOERR;
+		goto release;
+	}	
 	if(!dirContent.empty())
 		dirContent.append(":");
 	dirContent.append(name).append(":").append(filename(inum));
