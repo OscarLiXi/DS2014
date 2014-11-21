@@ -291,6 +291,44 @@ release:
 	return r;
 }
 
+int yfs_client::removeFile(inum parentID, std::string fileName)
+{
+	int r = OK;
+	std::string dirContent, content_cp, name_cp, id_str;
+	std::string::size_type head,tail,head2;
+	inum fileID;
+	if(ec->get(parentID, dirContent) != extent_protocol::OK){
+		return IOERR;
+	}
+	//search file in dirContent
+	content_cp = std::string(dirContent);
+	name_cp = std::string(fileName);
+	content_cp.append(":");
+	fileName.append(":");
+	head = content_cp.find(name_cp,0);
+	if(head){
+		printf("yfs_client::removeFile(): No such file\n");
+		return IOERR;
+	}
+	head2 = head + name_cp.size();
+	tail = content_cp.find(":",head2);
+	id_str = content_cp.substr(head2,tail-head2);
+	fileID = n2i(id_str);
+	
+	//remove it from dirContent
+	dirContent.erase(head,tail-head+1);
+	//remove it from extent_server
+	if(ec->remove(fileID) != extent_protocol::OK){
+		return IOERR;
+	}
+	//modify the directory content in extent_server	
+	if(ec->put(parentID,dirContent) != extent_protocol::OK){
+		return IOERR;
+	}
+
+	return r;
+}
+
 
 
 
