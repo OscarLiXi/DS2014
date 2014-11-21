@@ -107,8 +107,6 @@ int yfs_client::create(inum parentID, inum inum, const char *name)
 		r = IOERR;
 		goto release;
 	}	
-	if(!dirContent.empty())
-		dirContent.append(":");
 	dirContent.append(name).append(":").append(filename(inum)).append(":");
 	//append the new file or dir to its parent in extent server with its name and ID
 	if (ec->put(parentID, dirContent) != extent_protocol::OK) {
