@@ -94,15 +94,15 @@ yfs_client::getdir(inum inum, dirinfo &din)
 
 int yfs_client::create(inum parentID, inum inum, const char *name)
 {
-	std::cout<<"yfs_client::create: bp1"<<std::endl;
+	//std::cout<<"yfs_client::create: bp1"<<std::endl;
 	int r = OK;
 	std::string dirContent;	
 	if (ec->get(parentID, dirContent) != extent_protocol::OK) {
-		std::cout<<"yfs_client::create: bp2"<<std::endl;
+		//std::cout<<"yfs_client::create: bp2"<<std::endl;
     		r = IOERR;
 		goto release;
 	}
-		std::cout<<"yfs_client::create: bp3"<<std::endl;
+		//std::cout<<"yfs_client::create: bp3"<<std::endl;
 	//if it is a file, create a new file in extent server 
 	if(isfile(inum)){
 		if(ec->put(inum,std::string()) != extent_protocol::OK){
@@ -140,7 +140,7 @@ int yfs_client::getDirContent(inum inum, std::vector<std::pair<std::string, unsi
 	int r = OK;
 	std::string content;	
 	if (ec->get(inum, content) != extent_protocol::OK) {
-		std::cout<<"yfs_client::create: bp2"<<std::endl;
+		//std::cout<<"yfs_client::create: bp2"<<std::endl;
     		r = IOERR;
 		return r;
 	}
@@ -194,6 +194,39 @@ int yfs_client::getDirContent(inum inum, std::vector<std::pair<std::string, unsi
 	release: 
 		return r;
 }*/
+
+int yfs_client::read(inum inum, size_t readSize, off_t offset, std::string &retString)
+{
+	printf("Enter yfs_Client::read\n");
+	//printf("readSize: %d, offset: %d\n", readSize, offset);
+	int r = OK;
+	std::string content;
+	if (ec->get(inum, content) != extent_protocol::OK) {
+    		r = IOERR;
+		return r;
+	}
+	
+	size_t length = content.size();
+	printf("length: %d\n", length);
+	//readSize could be larger than length
+	if (readSize < 0 || offset < 0){
+		printf("yfs_Client::read : size or offset error\n");
+		r = IOERR;
+		return r;
+	}
+
+	if (offset >= length){ // return "\0"
+		retString = "";
+		std::cout<<"read content = "<<retString<<std::endl;
+		return r;				
+	}
+	
+	retString = content.substr(offset, readSize);
+	//std::cout<<"read content = "<<retString<<std::endl;
+	return r;
+}
+
+
 yfs_client::inum yfs_client::ilookup(inum parentID, std::string name)
 {
 	std::string dirContent;
@@ -217,4 +250,51 @@ yfs_client::inum yfs_client::ilookup(inum parentID, std::string name)
 	id_str = content_cp.substr(head,tail-head);
 	return n2i(id_str);
 }
+
+int yfs_client::setattr(inum fileID, fileinfo fin)
+{
+	
+	int r = OK;
+
+  	printf("setattr %016llx\n", fileID);
+  	extent_protocol::attr a;
+  	a.size = fin.size;
+  	if (ec->setattr(fileID, a) != extent_protocol::OK) {
+    	r = IOERR;
+    	goto release;
+  	}
+  
+ release: 
+	return r;	
+	
+}
+
+int yfs_client::write(inum fileID, std::string buf, int size, int off)
+{
+	int r = OK, content_size;
+	std::string content;
+	if(ec->get(fileID,content) != extent_protocol::OK){
+		r = IOERR;
+		goto release;
+	}
+	
+	//std::cout << "yfs_client::write():before insert, content=" << content << std::endl;
+	//std::cout << "yfs_client::write(): off=" << off << "buf= " << buf << std::endl;
+	content_size = content.size();
+	if(off >= content_size )
+		content.append(buf.substr(0, size));
+	else	
+		content.replace(off,size,  buf.substr(0,size));
+	//std::cout << "yfs_client::write(): after insert, content=" << content << std::endl;
+	if(ec->put(fileID,content) != extent_protocol::OK){
+		r = IOERR;
+		goto release;
+	}		
+release: 
+	return r;
+}
+
+
+
+
 

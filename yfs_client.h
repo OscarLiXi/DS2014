@@ -43,13 +43,17 @@
   bool isfile(inum);
   bool isdir(inum);
   inum ilookup(inum parentID, std::string name);
-
-  int getfile(inum, fileinfo &);
-  int getdir(inum, dirinfo &);
+  
+  int write(inum fileID, std::string buf,int size,  int off );  
+  int setattr(inum fileID, fileinfo fin);
+  int getfile(inum fileID, fileinfo &fin);
+  int getdir(inum, dirinfo &dirID);
   int getContent(inum inum, std::string &content);
   int create(inum parentID, inum fileID, const char *fileName);
 
   int getDirContent(inum inum, std::vector<std::pair<std::string, unsigned long long> > &dirContent);
+
+  int read(inum, size_t, off_t, std::string &);
 };
 
 #endif 

@@ -87,32 +87,71 @@ fuseserver_getattr(fuse_req_t req, fuse_ino_t ino,
 void
 fuseserver_setattr(fuse_req_t req, fuse_ino_t ino, struct stat *attr, int to_set, struct fuse_file_info *fi)
 {
+	
+	yfs_client::status ret;
+	if (DEBUG)
+		printf("fuseserver_setattr 0x%x\n", to_set);
+	//only consider to change the size attribute
+  	if (FUSE_SET_ATTR_SIZE & to_set) {
+    	
+		printf("   fuseserver_setattr set size to %zu\n", attr->st_size);
+    	struct stat st;
+		
+		yfs_client::fileinfo info;
+		info.size = attr->st_size;
+    	ret = yfs->setattr(ino,info);		
+		
+		if(ret != yfs_client::OK){
+			fuse_reply_err(req, ENOSYS);
+			return;
+		}
+		
+		ret = yfs->getfile(ino, info);
+		if(ret != yfs_client::OK){
+			fuse_reply_err(req, ENOSYS);
+			return;
+		}
 
-  printf("fuseserver_setattr 0x%x\n", to_set);
-  if (FUSE_SET_ATTR_SIZE & to_set) {
-    printf("   fuseserver_setattr set size to %zu\n", attr->st_size);
-    struct stat st;
-    // You fill this in
-#if 0
-    fuse_reply_attr(req, &st, 0);
-#else
-    fuse_reply_err(req, ENOSYS);
-#endif
-  } else {
-    fuse_reply_err(req, ENOSYS);
-  }
+		st.st_mode = S_IFREG | 0666;
+		st.st_nlink = 1;
+		st.st_atime = info.atime;
+		st.st_mtime = info.mtime;
+		st.st_ctime = info.ctime;
+		st.st_size = info.size;
+    	fuse_reply_attr(req, &st, 0);
+  	}
+  	else{
+		fuse_reply_err(req, ENOSYS);
+  	}
 }
 
 void
 fuseserver_read(fuse_req_t req, fuse_ino_t ino, size_t size,
       off_t off, struct fuse_file_info *fi)
 {
+	if (DEBUG)
+		std::cout<<"Enter fuseserver_read."<<std::endl;
+	yfs_client::status ret;
+	std::string retString;
+    	ret = yfs->read(ino, size, off, retString);		
+	if(ret != yfs_client::OK){
+		fuse_reply_err(req, ENOSYS);
+		return;
+	}
+	size = retString.size();
+	//char* buf = new char [size + 1];
+	//strcpy(buf, retString.c_str()); //copy read content to buf
+
+	fuse_reply_buf(req, retString.c_str(), size);
+
+	printf("End of fuseserver_read\n");
+	//delete[] buf;
   // You fill this in
-#if 0
-  fuse_reply_buf(req, buf, size);
-#else
-  fuse_reply_err(req, ENOSYS);
-#endif
+//#if 1
+//  fuse_reply_buf(req, buf, size);
+//#else
+//  fuse_reply_err(req, ENOSYS);
+//#endif
 }
 
 void
@@ -120,12 +159,18 @@ fuseserver_write(fuse_req_t req, fuse_ino_t ino,
   const char *buf, size_t size, off_t off,
   struct fuse_file_info *fi)
 {
-  // You fill this in
-#if 0
-  fuse_reply_write(req, bytes_written);
-#else
-  fuse_reply_err(req, ENOSYS);
-#endif
+  	// You fill this in
+	yfs_client::status ret;
+	printf("fuse.cc: write_size = %d, buf_size = %d\n",size,strlen(buf));
+	printf("fuse.cc: write %s \n", buf);	
+	ret = yfs->write(ino,buf,size,off);
+	if(ret != yfs_client::OK){
+		fuse_reply_err(req, ENOSYS);
+		return;
+	}
+ 
+	fuse_reply_write(req, size);
+
 }
 
 yfs_client::status
@@ -162,10 +207,12 @@ void
 fuseserver_create(fuse_req_t req, fuse_ino_t parent, const char *name,
    mode_t mode, struct fuse_file_info *fi)
 {
+    if (DEBUG)
+    	std::cout<<"fuseserver_create: bp1"<<std::endl;
   struct fuse_entry_param e;
   if( fuseserver_createhelper( parent, name, mode, &e ) == yfs_client::OK ) {
     if (DEBUG)
-    	std::cout<<"fuseserver_create: bp1"<<std::endl;
+    	std::cout<<"fuseserver_create: bp2"<<std::endl;
     fuse_reply_create(req, &e, fi);
   } else {
     fuse_reply_err(req, ENOENT);

@@ -24,6 +24,9 @@ extent_server::extent_server() {
 
 int extent_server::put(extent_protocol::extentid_t id, std::string buf, int &)
 {
+
+	if (DEBUG)
+		std::cout<<"Enter extent_server::put"<<std::endl;
 	if (buf.size() > extent_protocol::maxextent)
 		return extent_protocol::FBIG; //Exceed the maximun size
 	
@@ -72,9 +75,7 @@ int extent_server::get(extent_protocol::extentid_t id, std::string &buf)
 	it = extents.find(id);
 	
 	if (it == extents.end()){ //No such file
-		if (DEBUG){
-			std::cout<<"ExtentServer::get : No such file!"<<std::endl;
-		}
+		std::cout<<"ExtentServer::get : No such file!"<<std::endl;
 		return extent_protocol::NOENT;
 	}
 	else{
@@ -100,9 +101,7 @@ int extent_server::getattr(extent_protocol::extentid_t id, extent_protocol::attr
 	it = extents.find(id);
 	
 	if (it == extents.end()){ //No such file
-		if (DEBUG){
-			std::cout<<"ExtentServer::getattr : No such file!"<<std::endl;
-		}
+		std::cout<<"ExtentServer::getattr : No such file!"<<std::endl;
 		return extent_protocol::NOENT;
 	}
 	else{
@@ -117,6 +116,42 @@ int extent_server::getattr(extent_protocol::extentid_t id, extent_protocol::attr
 		return extent_protocol::OK;
 	}
 	
+	return extent_protocol::IOERR;
+}
+
+int extent_server::setattr(extent_protocol::extentid_t id, extent_protocol::attr a, int &)
+{
+	//We only set file's attribute, hence no need to judge id to file or dir
+	if (DEBUG)
+		std::cout<<"Enter extent_server::setattr"<<std::endl;
+	std::map<extent_protocol::extentid_t, struct extentInfo>::iterator it;
+	it = extents.find(id);
+	if (it == extents.end()){
+		std::cout<<"ExtentServer::setattr : No such file!"<<std::endl;
+		return extent_protocol::NOENT;		
+	}
+	else{
+		unsigned int newSize = a.size;
+		unsigned int oldSize = it->second.eAttr.size;
+		time_t curTime = time(NULL);
+		it->second.eAttr.atime = curTime;
+		if (newSize == oldSize){
+			//we need not do anything.
+			if (DEBUG)
+				std::cout<<"ExtentServer::setattr : newSize == oldSize";
+			return extent_protocol::OK;	
+		}
+		else{
+			//If newSize larger->padding, smaller->truncating
+			it->second.content.resize(newSize);
+			it->second.eAttr.ctime = curTime; //we need to change this because metadata has changed
+			it->second.eAttr.mtime = curTime; //We need to change this because content has changed
+			it->second.eAttr.size = newSize;
+			if (DEBUG)
+				std::cout<<"ExtentServer::setattr : set size to "<<newSize<<std::endl;
+			return extent_protocol::OK;
+		}
+	}
 	return extent_protocol::IOERR;
 }
 
