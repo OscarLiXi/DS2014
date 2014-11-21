@@ -308,7 +308,7 @@ int yfs_client::removeFile(inum parentID, std::string fileName)
 	head = content_cp.find(name_cp,0);
 	if(head){
 		printf("yfs_client::removeFile(): No such file\n");
-		return IOERR;
+		return NOENT;
 	}
 	head2 = head + name_cp.size();
 	tail = content_cp.find(":",head2);
