@@ -304,9 +304,12 @@ int yfs_client::removeFile(inum parentID, std::string fileName)
 	content_cp = std::string(dirContent);
 	name_cp = std::string(fileName);
 	content_cp.append(":");
-	fileName.append(":");
+	name_cp.append(":");
 	head = content_cp.find(name_cp,0);
-	if(head){
+	printf("yfs_client::remove():");
+	std::cout << "dirContent: "<< content_cp << std::endl;
+	std::cout << "file_name: " << name_cp << std::endl;	
+	if(head==std::string::npos){
 		printf("yfs_client::removeFile(): No such file\n");
 		return NOENT;
 	}
