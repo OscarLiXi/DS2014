@@ -157,6 +157,21 @@ int extent_server::setattr(extent_protocol::extentid_t id, extent_protocol::attr
 
 int extent_server::remove(extent_protocol::extentid_t id, int &)
 {
-  return extent_protocol::IOERR;
+	if (DEBUG)
+		std::cout<<"Enter extent_server::remove"<<std::endl;
+
+	std::map<extent_protocol::extentid_t, struct extentInfo>::iterator it;
+	it = extents.find(id);
+
+	if (it == extents.end()){ //No such file
+		std::cout<<"extent_server::remove : Does find the file to remove!"<<std::endl;
+		return extent_protocol::NOENT;
+	}
+	else{ //Delete it from extent server;
+		extents.erase(it);
+		return extent_protocol::OK;
+	}
+	
+	return extent_protocol::IOERR;
 }
 
