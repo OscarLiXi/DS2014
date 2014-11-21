@@ -133,7 +133,7 @@ unsigned long long stringToid(std::string s)
 
 int yfs_client::getDirContent(inum inum, std::vector<std::pair<std::string, unsigned long long> > &dirContent)
 {
-	//Dir format: name:ID:name2:ID2 ...
+	//Dir format: name:ID:name2:ID2: ...
 	int r = OK;
 	std::string content;	
 	if (ec->get(inum, content) != extent_protocol::OK) {
@@ -153,7 +153,7 @@ int yfs_client::getDirContent(inum inum, std::vector<std::pair<std::string, unsi
 	{
 		return r;
 	}
-
+	std::cout<<"content: "<<content<<std::endl;
 	while(end < contentLength){
 		size_t pos = content.find(symbol, begin);
 		if (pos == std::string::npos)
@@ -165,17 +165,17 @@ int yfs_client::getDirContent(inum inum, std::vector<std::pair<std::string, unsi
 		if (cycleTime % 2 == 1) //Store the name
 			tempName = content.substr(begin, end - begin);
 		else{
-			//std::cout<<"idstring: "<<end<<std::endl;
-			unsigned long long id = stringToid(content.substr(begin, end - begin));
+			unsigned long long id = n2i(content.substr(begin, end - begin));
+			std::cout<<"id: "<<id<<std::endl;
 			dirContent.push_back(std::make_pair(tempName, id));
 		}
 
 		begin = end + 1; //Find next substring		
 	}
 
-	//Find last string, because we did not use : to end it
-	unsigned long long id = stringToid(content.substr(begin, end));
-	dirContent.push_back(std::make_pair(tempName, id));
+	//Find last string, because we did not use : to end it. modify the format, now these codes are useless. R.I.P
+	//unsigned long long id = n2i(content.substr(begin, end));
+	//dirContent.push_back(std::make_pair(tempName, id));
 
 	return r;
 }
