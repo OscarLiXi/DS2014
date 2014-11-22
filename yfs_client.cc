@@ -104,7 +104,13 @@ int yfs_client::create(inum parentID, inum inum, const char *name)
 		goto release;
 	}
 	std::cout<<"before append yfs_client::create :"<<dirContent<<std::endl;
-		//std::cout<<"yfs_client::create: bp3"<<std::endl;
+		//std::cout<<"yfs_client::create: bp3"<<std::endl;	
+	if(isFileExist(dirContent,name))
+	{
+		//r = ;
+		goto release;
+	}
+	//std::cout<<"yfs_client::create: bp3"<<std::endl;
 	if(ec->put(inum,std::string()) != extent_protocol::OK){
 		r = IOERR;
 		goto release;
@@ -225,7 +231,20 @@ int yfs_client::read(inum inum, size_t readSize, off_t offset, std::string &retS
 	return r;
 }
 
-
+bool yfs_client::isFileExist(std::string dirContent, std::string name)
+{
+	
+	std::string::size_type head; //head and tail of id substring in dirContent
+	std::string content_cp = std::string(dirContent);
+	std::string name_cp = std::string(name);
+	//content_cp.append(":");
+	name_cp.append(":");
+	head = content_cp.find(name_cp,0);
+	if(head==std::string::npos)
+		return false;
+	else
+		return true;
+}
 yfs_client::inum yfs_client::ilookup(inum parentID, std::string name)
 {
 	std::string dirContent;

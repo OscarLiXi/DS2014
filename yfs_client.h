@@ -37,6 +37,7 @@
  private:
   static std::string filename(inum);
   static inum n2i(std::string);
+  bool isFileExist(std::string dirContent, std::string name);
  public:
 
   yfs_client(std::string, std::string);
