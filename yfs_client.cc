@@ -14,7 +14,7 @@
 yfs_client::yfs_client(std::string extent_dst, std::string lock_dst)
 {
   ec = new extent_client(extent_dst);
-
+  lc = new lock_client(lock_dst);
 }
 
 yfs_client::inum
@@ -96,6 +96,7 @@ int yfs_client::create(inum parentID, inum inum, const char *name)
 {
 	//std::cout<<"yfs_client::create: bp1"<<std::endl;
 	int r = OK;
+	lc->acquire(parentID);
 	std::string dirContent;	
 	if (ec->get(parentID, dirContent) != extent_protocol::OK) {
 		//std::cout<<"yfs_client::create: bp2"<<std::endl;
@@ -115,6 +116,7 @@ int yfs_client::create(inum parentID, inum inum, const char *name)
 	}
 	
 	release: 
+		lc->release(parentID);
 		return r;
 }
 
