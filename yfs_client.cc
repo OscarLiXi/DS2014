@@ -48,6 +48,7 @@ yfs_client::isdir(inum inum)
   return ! isfile(inum);
 }
 
+
 int
 yfs_client::getfile(inum inum, fileinfo &fin)
 {
@@ -91,24 +92,26 @@ yfs_client::getdir(inum inum, dirinfo &din)
  release:
   return r;
 }
-
-int yfs_client::create(inum parentID, inum inum, const char *name)
+//return ret_inum as the created file's file identifier
+int yfs_client::create(inum parentID, inum inum, const char *name, yfs_client::inum &ret_inum)
 {
+	lc->acquire(parentID);
 	//std::cout<<"yfs_client::create: bp1"<<std::endl;
 	int r = OK;
-	lc->acquire(parentID);
-	std::string dirContent;	
+	std::string dirContent;
+	//printf("yfs_client::create():");
+	//printf("pid = %d, filename = %s\n",getpid(),name);
+	ret_inum = ilookup(parentID,name);
+	
+	if(ret_inum !=0 )
+		goto release;
+	ret_inum = inum;
 	if (ec->get(parentID, dirContent) != extent_protocol::OK) {
 		//std::cout<<"yfs_client::create: bp2"<<std::endl;
-    		r = IOERR;
+    	r = IOERR;
 		goto release;
 	}
 	
-	if(isFileExist(dirContent,name))
-	{
-		//r = ;
-		goto release;
-	}
 	//std::cout<<"yfs_client::create: bp3"<<std::endl;
 	if(ec->put(inum,std::string()) != extent_protocol::OK){
 		r = IOERR;
@@ -120,7 +123,8 @@ int yfs_client::create(inum parentID, inum inum, const char *name)
     	r = IOERR;
 		goto release;
 	}
-	
+	printf("create %s\n",name);
+	std::cout << "after create, dirContent = "<< dirContent<< std::endl;
 	release: 
 		lc->release(parentID);
 		return r;
@@ -313,11 +317,14 @@ release:
 int yfs_client::removeFile(inum parentID, std::string fileName)
 {
 	int r = OK;
+	lc->acquire(parentID);
+
 	std::string dirContent, content_cp, name_cp, id_str;
 	std::string::size_type head,tail,head2;
 	inum fileID;
 	if(ec->get(parentID, dirContent) != extent_protocol::OK){
-		return IOERR;
+		r = IOERR;
+		goto release;
 	}
 	//search file in dirContent
 	content_cp = std::string(dirContent);
@@ -331,7 +338,8 @@ int yfs_client::removeFile(inum parentID, std::string fileName)
 	std::cout << "file_name: " << fileName << std::endl;	
 	if(head==std::string::npos){
 		printf("yfs_client::removeFile(): No such file\n");
-		return NOENT;
+		r = NOENT;
+		goto release;
 	}
 	head2 = head + name_cp.size();
 	tail = content_cp.find(":",head2);
@@ -347,13 +355,16 @@ int yfs_client::removeFile(inum parentID, std::string fileName)
 	std::cout << "dirContent: "<< dirContent << std::endl;
 	//remove it from extent_server
 	if(ec->remove(fileID) != extent_protocol::OK){
-		return IOERR;
+		r = IOERR;
+		goto release;
 	}
 	//modify the directory content in extent_server	
 	if(ec->put(parentID,dirContent) != extent_protocol::OK){
-		return IOERR;
+		r = IOERR;
+		goto release;
 	}
-
+release: 
+	lc->release(parentID);
 	return r;
 }
 
