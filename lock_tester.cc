@@ -177,6 +177,8 @@ main(int argc, char *argv[])
     printf("cache lock client\n");
     for (int i = 0; i < nt; i++) lc[i] = new lock_client_cache(dst);
 
+    printf("simple lock client\n");
+    for (int i = 0; i < nt; i++) lc[i] = new lock_client(dst);
     if(!test || test == 1){
       test1();
     }
