@@ -459,7 +459,7 @@ main(int argc, char *argv[])
 
 		simple_tests(clients[0]);
 		concurrent_test(10);
-		lossy_test();
+		//lossy_test();
 		if (isserver) {
 			failure_test();
 		}
