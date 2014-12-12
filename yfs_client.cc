@@ -103,14 +103,14 @@ int yfs_client::create(inum parentID, inum inum, const char *name)
     		r = IOERR;
 		goto release;
 	}
-	std::cout<<"before append yfs_client::create :"<<dirContent<<std::endl;
+	std::cout<<"before append yfs_client::create :"<<dirContent<<std::endl; 
 		//std::cout<<"yfs_client::create: bp3"<<std::endl;	
 	if(isFileExist(dirContent,name))
 	{
 		//r = ;
 		goto release;
 	}
-	//std::cout<<"yfs_client::create: bp3"<<std::endl;
+	std::cout<<"yfs_client::create: bp2"<<std::endl;
 	if(ec->put(inum,std::string()) != extent_protocol::OK){
 		r = IOERR;
 		goto release;
@@ -119,7 +119,7 @@ int yfs_client::create(inum parentID, inum inum, const char *name)
 	std::cout<<"after append yfs_client::create :"<<dirContent<<std::endl;
 	//append the new file or dir to its parent in extent server with its name and ID
 	if (ec->put(parentID, dirContent) != extent_protocol::OK) {
-    	r = IOERR;
+    		r = IOERR;
 		goto release;
 	}
 	
