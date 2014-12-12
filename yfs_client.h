@@ -15,7 +15,7 @@
  public:
 
   typedef unsigned long long inum;
-  enum xxstatus { OK, RPCERR, NOENT, IOERR, FBIG };
+  enum xxstatus { OK, RPCERR, NOENT, IOERR, FBIG,EXIST };
   typedef int status;
 
   struct fileinfo {
@@ -45,14 +45,14 @@
   bool isfile(inum);
   bool isdir(inum);
   inum ilookup(inum parentID, std::string name);
- 
+	
   int removeFile(inum parentID, std::string fileName); 
   int write(inum fileID, std::string buf,int size,  int off );  
   int setattr(inum fileID, fileinfo fin);
   int getfile(inum fileID, fileinfo &fin);
   int getdir(inum, dirinfo &dirID);
   int getContent(inum inum, std::string &content);
-  int create(inum parentID, inum fileID, const char *fileName);
+  int create(inum parentID, inum fileID, const char *fileName, inum &ret_inum);
 
   int getDirContent(inum inum, std::vector<std::pair<std::string, unsigned long long> > &dirContent);
 
