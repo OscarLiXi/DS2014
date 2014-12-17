@@ -101,6 +101,7 @@ fuseserver_setattr(fuse_req_t req, fuse_ino_t ino, struct stat *attr, int to_set
     fuse_reply_err(req, ENOSYS);
   }
 	
+{	
 	yfs_client::status ret;
 	if (DEBUG)
 		printf("fuseserver_setattr 0x%x\n", to_set);

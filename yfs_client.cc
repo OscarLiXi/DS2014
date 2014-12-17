@@ -111,16 +111,15 @@ int yfs_client::create(inum parentID, inum inum, const char *name, yfs_client::i
     	r = IOERR;
 		goto release;
 	}
-	
-	//std::cout<<"yfs_client::create: bp3"<<std::endl;
 	if(ec->put(inum,std::string()) != extent_protocol::OK){
 		r = IOERR;
 		goto release;
 	}	
 	dirContent.append(name).append(":").append(filename(inum)).append(":");
+	std::cout<<"after append yfs_client::create :"<<dirContent<<std::endl;
 	//append the new file or dir to its parent in extent server with its name and ID
 	if (ec->put(parentID, dirContent) != extent_protocol::OK) {
-    	r = IOERR;
+    		r = IOERR;
 		goto release;
 	}
 	printf("create %s\n",name);
@@ -253,6 +252,8 @@ yfs_client::inum yfs_client::ilookup(inum parentID, std::string name)
 	if(ec->get(parentID, dirContent) != extent_protocol::OK){
 		return 0;
 	}	
+	std::cout<<"yfs_client::ilookup : parentID:"<<parentID<<std::endl;
+	std::cout<<"yfs_client::ilookup : dirContent:"<<dirContent<<std::endl;
 	//search name in the string dirContent
 	std::string::size_type head, tail; //head and tail of id substring in dirContent
 	std::string id_str;
