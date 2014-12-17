@@ -174,14 +174,8 @@ main(int argc, char *argv[])
 
     assert(pthread_mutex_init(&count_mutex, NULL) == 0);
 
-<<<<<<< HEAD
     printf("cache lock client\n");
     for (int i = 0; i < nt; i++) lc[i] = new lock_client_cache(dst);
-
-=======
-    printf("simple lock client\n");
-    for (int i = 0; i < nt; i++) lc[i] = new lock_client(dst);
->>>>>>> lab4
     if(!test || test == 1){
       test1();
     }
