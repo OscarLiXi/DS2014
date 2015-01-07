@@ -87,21 +87,7 @@ fuseserver_getattr(fuse_req_t req, fuse_ino_t ino,
 void
 fuseserver_setattr(fuse_req_t req, fuse_ino_t ino, struct stat *attr, int to_set, struct fuse_file_info *fi)
 {
-  printf("fuseserver_setattr 0x%x\n", to_set);
-  if (FUSE_SET_ATTR_SIZE & to_set) {
-    printf("   fuseserver_setattr set size to %llu\n", attr->st_size);
-    struct stat st;
-    // You fill this in
-#if 0
-    fuse_reply_attr(req, &st, 0);
-#else
-    fuse_reply_err(req, ENOSYS);
-#endif
-  } else {
-    fuse_reply_err(req, ENOSYS);
-  }
 	
-{	
 	yfs_client::status ret;
 	if (DEBUG)
 		printf("fuseserver_setattr 0x%x\n", to_set);
@@ -139,8 +125,7 @@ fuseserver_setattr(fuse_req_t req, fuse_ino_t ino, struct stat *attr, int to_set
   	}
 }
 
-void
-fuseserver_read(fuse_req_t req, fuse_ino_t ino, size_t size,
+void fuseserver_read(fuse_req_t req, fuse_ino_t ino, size_t size,
       off_t off, struct fuse_file_info *fi)
 {
 	if (DEBUG)
@@ -412,8 +397,7 @@ fuseserver_statfs(fuse_req_t req)
 
 struct fuse_lowlevel_ops fuseserver_oper;
 
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
   char *mountpoint = 0;
   int err = -1;
