@@ -157,6 +157,7 @@ createn(const char *d, const char *prefix, int nf)
   for(i = 0; i < nf; i++){
     sprintf(n, "%s/%s-%d", d, prefix, i);
     fd = creat(n, 0666);
+    printf("pid=%d, createn:%s\n", getpid(), n);
     if(fd < 0){
       fprintf(stderr, "test-lab-4-b: create(%s): %s\n",
               n, strerror(errno));
