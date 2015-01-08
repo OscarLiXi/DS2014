@@ -46,6 +46,7 @@
   bool isfile(inum);
   bool isdir(inum);
   inum ilookup(inum parentID, std::string name);
+  inum ilookupnew(inum parentID, std::string name);
 	
   int removeFile(inum parentID, std::string fileName); 
   int write(inum fileID, std::string buf,int size,  int off );  
