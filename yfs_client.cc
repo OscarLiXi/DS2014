@@ -71,11 +71,8 @@ yfs_client::getfile(inum inum, fileinfo &fin)
   printf("getfile %016llx -> sz %llu\n", inum, fin.size);
 
  release:
-<<<<<<< HEAD
-=======
 
  printf("In yfs_client: getfile() release lock %d\n",inum); 
->>>>>>> ba79aeb1ab00f723ca1cb21b3d8e34e83b9e20c8
   lc->release(inum);
   return r;
 }
@@ -99,11 +96,8 @@ yfs_client::getdir(inum inum, dirinfo &din)
   din.ctime = a.ctime;
 
  release:
-<<<<<<< HEAD
-=======
 
  printf("In yfs_client: getdir() release lock %d\n",inum); 
->>>>>>> ba79aeb1ab00f723ca1cb21b3d8e34e83b9e20c8
   lc->release(inum);
   return r;
 }
@@ -118,11 +112,7 @@ int yfs_client::create(inum parentID, inum inum, const char *name, yfs_client::i
 	std::string dirContent;
 	//printf("yfs_client::create():");
 	//printf("pid = %d, filename = %s\n",getpid(),name);
-<<<<<<< HEAD
-	ret_inum = ilookupnew(parentID,name);
-=======
 	ret_inum = lookup(parentID,name);
->>>>>>> ba79aeb1ab00f723ca1cb21b3d8e34e83b9e20c8
 	
 	if(ret_inum !=0 )
 		goto release;
@@ -191,12 +181,8 @@ int yfs_client::getDirContent(inum inum, std::vector<std::pair<std::string, unsi
 	if (ec->get(inum, content) != extent_protocol::OK) {
 		//std::cout<<"yfs_client::create: bp2"<<std::endl;
     		r = IOERR;
-<<<<<<< HEAD
-		goto release;
-=======
 		lc->release(inum);
 		return r;
->>>>>>> ba79aeb1ab00f723ca1cb21b3d8e34e83b9e20c8
 	}
 	//Now we get the content of dir, and separate into names and ids
 	contentLength = content.size();
@@ -204,12 +190,8 @@ int yfs_client::getDirContent(inum inum, std::vector<std::pair<std::string, unsi
 
 	if (content.find(symbol) == std::string::npos)
 	{
-<<<<<<< HEAD
-		goto release;
-=======
 		lc->release(inum);
 		return r;
->>>>>>> ba79aeb1ab00f723ca1cb21b3d8e34e83b9e20c8
 	}
 	std::cout<<"content: "<<content<<std::endl;
 	while(end < contentLength){
@@ -234,13 +216,7 @@ int yfs_client::getDirContent(inum inum, std::vector<std::pair<std::string, unsi
 	//Find last string, because we did not use : to end it. modify the format, now these codes are useless. R.I.P
 	//unsigned long long id = n2i(content.substr(begin, end));
 	//dirContent.push_back(std::make_pair(tempName, id));
-<<<<<<< HEAD
-
-release:
-=======
-	
  printf("In yfs_client: getDirContent() release lock %d\n",inum); 
->>>>>>> ba79aeb1ab00f723ca1cb21b3d8e34e83b9e20c8
 	lc->release(inum);
 	return r;
 }
@@ -341,7 +317,7 @@ yfs_client::inum yfs_client::lookup(yfs_client::inum parentID, std::string name)
 	return n2i(id_str);
 }
 
-yfs_client::inum yfs_client::ilookup(inum parentID, std::string name)
+yfs_client::inum yfs_client::lookup(inum parentID, std::string name)
 {
 	
 	printf("In yfs_client: ilookup() acquire lock %d\n",parentID);
