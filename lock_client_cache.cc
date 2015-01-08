@@ -82,9 +82,9 @@ lock_client_cache::releaser()
 		pthread_mutex_unlock(&releaseLock.m);
 
 		std::list<lock_protocol::lockid_t>::iterator it;
-		//std::cout<<"client lock1"<<std::endl;
+		std::cout<<"client lock1"<<std::endl;
 		pthread_mutex_lock(&clientLock.m);
-		//std::cout<<"client lock2"<<std::endl;
+		std::cout<<"client lock2"<<std::endl;
 		for (it = releaseList.begin(); it != releaseList.end(); ){
 			
 			lid = *it;
@@ -106,13 +106,14 @@ lock_client_cache::releaser()
 			}
 			else
 				statusNum = lockStatusMap[lid];
-			
+			printf("LockClient: Releaser: lockid=%d, lock status=%d\n",lid,statusNum);	
 			pthread_mutex_unlock(&lockStatusLock);
 
 			if (statusNum == Free || statusNum == Releasing){
 				//std::cout<<"releaser: statusNum: "<<statusNum<<std::endl;
 				//std::cout<<"releaser: statusNum2: "<<statusNum<<std::endl;
 				int r;
+				lu->dorelease(lid);
 				lock_protocol::status response = cl->call(lock_protocol::release, id, tempseqNum, lid, r);
 				
 				if (response != lock_protocol::OK){
@@ -275,7 +276,7 @@ lock_client_cache::release(lock_protocol::lockid_t lid)
 		pthread_cond_signal(&releaseLock.c);
 		pthread_mutex_unlock(&releaseLock.m);		
 			
-		//std::cout<<"Client: "<<id<<" release lock: "<<lid<<" to releasing2"<<std::endl;
+		std::cout<<"Client: "<<id<<" release lock: "<<lid<<" to releasing2"<<std::endl;
 		goto RELEASE_LOCK;	
 	}
 	else{ //not in release list, wake up other threads
@@ -286,7 +287,7 @@ lock_client_cache::release(lock_protocol::lockid_t lid)
 		
 		pthread_mutex_unlock(&clientLock.m);	
 		pthread_cond_broadcast(&clientLock.c);
-		//std::cout<<"Client: "<<id<<" release lock: "<<lid<<" to free2"<<std::endl;
+		std::cout<<"Client: "<<id<<" release lock: "<<lid<<" to free2"<<std::endl;
 		return ret;
 	}
 	
@@ -303,7 +304,7 @@ lock_client_cache::revoke(lock_protocol::lockid_t lid, int &r)
 	releaseList.push_back(lid);
 	pthread_cond_broadcast(&releaseLock.c);
 	pthread_mutex_unlock(&releaseLock.m);	
-	//std::cout<<"LockClient: client: "<<id<<" revoke2!"<<std::endl;
+	std::cout<<"LockClient: client: "<<id<<" revoke2!"<<std::endl;
 	return rlock_protocol::OK;
 }
 

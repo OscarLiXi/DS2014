@@ -21,8 +21,16 @@ extent_server::extent_server() {
 	extents.insert(std::pair<extent_protocol::extentid_t, struct extentInfo>(1, rootDir));
 }
 
+int extent_server::put(extent_protocol::extentid_t id, std::string buf, 
+						extent_protocol::attr attr, int &)
+{
+	std::cout << "Put id=" << id << "content=" << buf << std::endl;
+	extents[id].content = buf;
+	extents[id].eAttr = attr;
+	return extent_protocol::OK;
+}
 
-int extent_server::put(extent_protocol::extentid_t id, std::string buf, int &)
+/*int extent_server::put(extent_protocol::extentid_t id, std::string buf, int &)
 {
 
 	if (DEBUG)
@@ -67,7 +75,7 @@ int extent_server::put(extent_protocol::extentid_t id, std::string buf, int &)
 
 	return extent_protocol::IOERR;
 }
-
+*/
 int extent_server::get(extent_protocol::extentid_t id, std::string &buf)
 {
 	std::cout<<"Enter extent_server::get"<<std::endl;

@@ -30,19 +30,19 @@ int id() {
 yfs_client::status
 getattr(yfs_client::inum inum, struct stat &st)
 {
-  yfs_client::status ret;
+  yfs_client::status ret = yfs_client::OK;
 
   bzero(&st, sizeof(st));
 
   st.st_ino = inum;
 
   printf("getattr %016llx %d\n", inum, yfs->isfile(inum));
-	
+
   if(yfs->isfile(inum)){
      yfs_client::fileinfo info;
      ret = yfs->getfile(inum, info);
      if(ret != yfs_client::OK)
-       return ret;
+  		return ret;     
      st.st_mode = S_IFREG | 0666;
      st.st_nlink = 1;
      st.st_atime = info.atime;
@@ -64,7 +64,8 @@ getattr(yfs_client::inum inum, struct stat &st)
      if (DEBUG)
      	printf("   getattr -> %lu %lu %lu\n", info.atime, info.mtime, info.ctime);
    }
-   return yfs_client::OK;
+
+   return ret;
 }
 
 
@@ -97,6 +98,7 @@ fuseserver_setattr(fuse_req_t req, fuse_ino_t ino, struct stat *attr, int to_set
 		printf("   fuseserver_setattr set size to %zu\n", attr->st_size);
     	struct stat st;
 		
+
 		yfs_client::fileinfo info;
 		info.size = attr->st_size;
     	ret = yfs->setattr(ino,info);		

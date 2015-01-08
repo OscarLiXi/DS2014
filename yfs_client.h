@@ -5,14 +5,28 @@
 //#include "yfs_protocol.h"
 #include "extent_client.h"
 #include <vector>
-
+#include <stdio.h>
 #include "lock_protocol.h"
 #include "lock_client_cache.h"
 
+class lock_release_user_impl: public lock_release_user{
+	private:
+		extent_client *ec;
+	public: 
+		lock_release_user_impl(extent_client *e){
+			ec = e;
+			printf("lock_release_use_impl()\n");
+		}
+		void dorelease(extent_protocol::extentid_t id){
+			printf("yfs-client: do release()\n");
+			ec->flush(id);
+		}
+};
 
   class yfs_client {
   extent_client *ec;
   lock_client_cache *lc;
+  lock_release_user_impl *lu;
  public:
 
   typedef unsigned long long inum;
@@ -46,7 +60,8 @@
   bool isfile(inum);
   bool isdir(inum);
   inum ilookup(inum parentID, std::string name);
-	
+  inum lookup(inum parentID, std::string name);
+  
   int removeFile(inum parentID, std::string fileName); 
   int write(inum fileID, std::string buf,int size,  int off );  
   int setattr(inum fileID, fileinfo fin);
@@ -58,6 +73,9 @@
   int getDirContent(inum inum, std::vector<std::pair<std::string, unsigned long long> > &dirContent);
 
   int read(inum, size_t, off_t, std::string &);
+
+//  void acquire(extent_protocol::extentid_t id);
+ // void release(extent_protocol::extentid_t id);
 };
 
 #endif 
