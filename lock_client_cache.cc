@@ -113,6 +113,7 @@ lock_client_cache::releaser()
 				//std::cout<<"releaser: statusNum: "<<statusNum<<std::endl;
 				//std::cout<<"releaser: statusNum2: "<<statusNum<<std::endl;
 				int r;
+				//calling extent_client to flush extents cache before lock release
 				lu->dorelease(lid);
 				lock_protocol::status response = cl->call(lock_protocol::release, id, tempseqNum, lid, r);
 				

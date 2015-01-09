@@ -8,15 +8,18 @@
 #include <stdio.h>
 #include "lock_protocol.h"
 #include "lock_client_cache.h"
-
+//implement the class defined in lock_client_cache
+//this class is for flush extent cache to the server when lock release happen
 class lock_release_user_impl: public lock_release_user{
 	private:
 		extent_client *ec;
 	public: 
+		//get the ec object in order to flush
 		lock_release_user_impl(extent_client *e){
 			ec = e;
 			printf("lock_release_use_impl()\n");
 		}
+		//to flush extent cache, only called when lock release happens
 		void dorelease(extent_protocol::extentid_t id){
 			printf("yfs-client: do release()\n");
 			ec->flush(id);

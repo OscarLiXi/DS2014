@@ -14,6 +14,7 @@
 yfs_client::yfs_client(std::string extent_dst, std::string lock_dst)
 {
   	ec = new extent_client(extent_dst);
+	//this object is used to call ec.flush() when lock release happens
   	lu = new lock_release_user_impl(ec);
   	lc = new lock_client_cache(lock_dst,lu);
 }
