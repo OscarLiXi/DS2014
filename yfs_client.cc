@@ -58,7 +58,6 @@ yfs_client::getfile(inum inum, fileinfo &fin)
   lc->acquire(inum);
   printf("getfile %016llx\n", inum);
   extent_protocol::attr a;
-  lc->acquire(inum);
   if (ec->getattr(inum, a) != extent_protocol::OK) {
     r = IOERR;
     goto release;
@@ -86,7 +85,6 @@ yfs_client::getdir(inum inum, dirinfo &din)
  lc->acquire(inum);
   printf("getdir %d\n", inum);
   extent_protocol::attr a;
-  lc->acquire(inum);
   if (ec->getattr(inum, a) != extent_protocol::OK) {
     r = IOERR;
     goto release;
@@ -169,15 +167,7 @@ int yfs_client::getDirContent(inum inum, std::vector<std::pair<std::string, unsi
  printf("In yfs_client: getDirContent() acquire lock %d\n",inum); 
 	lc->acquire(inum);
 	int r = OK;
-	std::string content;
-	std::string tempName;
-	size_t contentLength;
-	int begin = 0, end = 0;
-	int cycleTime = 0;
-	std::string symbol (":");
-	
-	lc->acquire(inum);
-
+	std::string content;	
 	if (ec->get(inum, content) != extent_protocol::OK) {
 		//std::cout<<"yfs_client::create: bp2"<<std::endl;
     		r = IOERR;
@@ -185,8 +175,11 @@ int yfs_client::getDirContent(inum inum, std::vector<std::pair<std::string, unsi
 		return r;
 	}
 	//Now we get the content of dir, and separate into names and ids
-	contentLength = content.size();
-	
+	size_t contentLength = content.size();
+	int begin = 0, end = 0;
+	int cycleTime = 0;
+	std::string symbol (":");
+	std::string tempName;
 
 	if (content.find(symbol) == std::string::npos)
 	{
@@ -216,6 +209,7 @@ int yfs_client::getDirContent(inum inum, std::vector<std::pair<std::string, unsi
 	//Find last string, because we did not use : to end it. modify the format, now these codes are useless. R.I.P
 	//unsigned long long id = n2i(content.substr(begin, end));
 	//dirContent.push_back(std::make_pair(tempName, id));
+	
  printf("In yfs_client: getDirContent() release lock %d\n",inum); 
 	lc->release(inum);
 	return r;
@@ -248,9 +242,7 @@ int yfs_client::read(inum inum, size_t readSize, off_t offset, std::string &retS
 		goto release;
 		return r;
 	}
-	length = content.size();
 	
-
 	length = content.size();
 	//printf("length: %d\n", length);
 	//readSize could be larger than length
@@ -271,6 +263,7 @@ int yfs_client::read(inum inum, size_t readSize, off_t offset, std::string &retS
 	retString = content.substr(offset, readSize);
 	//std::cout<<"read content = "<<retString<<std::endl;
 release:
+
  printf("In yfs_client: read() release lock %d\n",inum); 
 	lc->release(inum);
 	return r;
@@ -317,65 +310,25 @@ yfs_client::inum yfs_client::lookup(yfs_client::inum parentID, std::string name)
 	return n2i(id_str);
 }
 
-yfs_client::inum yfs_client::lookup(inum parentID, std::string name)
+yfs_client::inum yfs_client::ilookup(inum parentID, std::string name)
 {
 	
 	printf("In yfs_client: ilookup() acquire lock %d\n",parentID);
 	lc->acquire(parentID);
 	std::string dirContent;
-	std::string id_str;
-	//lc->acquire(parentID);
-
-	//search name in the string dirContent
-	std::string::size_type head, tail; //head and tail of id substring in dirContent
-	
-	std::string content_cp;// = std::string(dirContent);
-	std::string name_cp;// = std::string(name);
-
 	if(ec->get(parentID, dirContent) != extent_protocol::OK){
+	
 	printf("In yfs_client: ilookup() release lock %d\n",parentID);
 			lc->release(parentID);
 		return 0;
 	}	
 	std::cout<<"yfs_client::ilookup : parentID:"<<parentID<<std::endl;
 	std::cout<<"yfs_client::ilookup : dirContent:"<<dirContent<<std::endl;
-	content_cp = std::string(dirContent);
-	name_cp = std::string(name);
-	//content_cp.append(":");
-	name_cp.append(":");
-	head = content_cp.find(name_cp,0);
-	if(head==std::string::npos){
-		printf("yfs_client::ilookup(): No matches\n");
-		goto release;
-	}
-	head += name_cp.size();
-	tail = content_cp.find(":",head);
-	id_str = content_cp.substr(head,tail-head);
-
-release:
-	//lc->release(parentID);
-	return n2i(id_str);
-}
-
-yfs_client::inum yfs_client::ilookup(inum parentID, std::string name)
-{
-	std::string dirContent;
-	std::string id_str;
-	lc->acquire(parentID);
-
 	//search name in the string dirContent
 	std::string::size_type head, tail; //head and tail of id substring in dirContent
-	
-	std::string content_cp;// = std::string(dirContent);
-	std::string name_cp;// = std::string(name);
-
-	if(ec->get(parentID, dirContent) != extent_protocol::OK){
-		goto release;
-	}	
-	std::cout<<"yfs_client::ilookup : parentID:"<<parentID<<std::endl;
-	std::cout<<"yfs_client::ilookup : dirContent:"<<dirContent<<std::endl;
-	content_cp = std::string(dirContent);
-	name_cp = std::string(name);
+	std::string id_str;
+	std::string content_cp = std::string(dirContent);
+	std::string name_cp = std::string(name);
 	//content_cp.append(":");
 	name_cp.append(":");
 	head = content_cp.find(name_cp,0);
@@ -402,13 +355,13 @@ int yfs_client::setattr(inum fileID, fileinfo fin)
 	int r = OK;
 
   	printf("setattr %016llx\n", fileID);
-	lc->acquire(fileID);
   	extent_protocol::attr a;
   	a.size = fin.size;
   	if (ec->setattr(fileID, a) != extent_protocol::OK) {
     	r = IOERR;
     	goto release;
   	}
+  
  release:
 
 	printf("In yfs_client: setattr() release lock %d\n",fileID);
@@ -424,7 +377,6 @@ int yfs_client::write(inum fileID, std::string buf, int size, int off)
 	lc->acquire(fileID);
 	int r = OK, content_size;
 	std::string content;
-	lc->acquire(fileID);
 	if(ec->get(fileID,content) != extent_protocol::OK){
 		r = IOERR;
 		goto release;

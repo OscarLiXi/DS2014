@@ -163,14 +163,15 @@ extent_client::flush(extent_protocol::extentid_t eid)
 							extents_cache[eid].attr, r);
 			std::cout << extents_cache[eid].content << std::endl;
 		}
-		extent_protocol::attr attr;
-		extents_cache[eid].content = "";
-		extents_cache[eid].attr = attr;
-		extents_cache[eid].isDirty = false;
-		extents_cache[eid].isCached = false;
-		extents_cache[eid].isRemote = false;
-		extents_cache[eid].isRemoved = false;
+
 	}
+	extent_protocol::attr attr;
+	extents_cache[eid].content = "";
+	extents_cache[eid].attr = attr;
+	extents_cache[eid].isDirty = false;
+	extents_cache[eid].isCached = false;
+	extents_cache[eid].isRemote = false;
+	extents_cache[eid].isRemoved = false;
 	pthread_mutex_unlock(&extents_cache_m);
 	return ret;
 }

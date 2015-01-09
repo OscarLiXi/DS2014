@@ -205,19 +205,20 @@ lock_client_cache::acquire(lock_protocol::lockid_t lid)
 					goto RELEASE_LOCK;
 				}
 				else if (response == lock_protocol::RETRY){ //FIXME: what if RPCERR?
+					pthread_mutex_unlock(&clientLock.m);
 					pthread_mutex_lock(&lockStatusLock);
 					lockStatusMap[lid] = None;
 					pthread_mutex_unlock(&lockStatusLock);
 					pthread_mutex_lock(&retryLock.m);
 					//first we find if this lock is in our retryList
-					//std::cout<<"lock1"<<std::endl;
+					std::cout<<"LockClient: client: "<<id<<" is waiting to retry lock:"<<lid<<std::endl;
 					while(!isInList(retryList, lid)){
 						pthread_cond_wait(&retryLock.c, &retryLock.m);
 					}
-					//std::cout<<"lock2"<<std::endl;
+					std::cout<<"LockClient: client: "<<id<<" is allowed to retry lock:"<<lid<<std::endl;
 					retryList.remove(lid);
 					pthread_mutex_unlock(&retryLock.m);
-					
+					pthread_mutex_lock(&clientLock.m);
 					continue;
 				}
 			}					
@@ -304,7 +305,7 @@ lock_client_cache::revoke(lock_protocol::lockid_t lid, int &r)
 	releaseList.push_back(lid);
 	pthread_cond_broadcast(&releaseLock.c);
 	pthread_mutex_unlock(&releaseLock.m);	
-	std::cout<<"LockClient: client: "<<id<<" revoke2!"<<std::endl;
+	std::cout<<"LockClient: client: "<<id<<" is asked to revoke lock:"<<lid<<std::endl;
 	return rlock_protocol::OK;
 }
 
@@ -313,8 +314,9 @@ lock_client_cache::retry(lock_protocol::lockid_t lid, int &r)
 {
 	pthread_mutex_lock(&retryLock.m);
 	retryList.push_back(lid);
-	pthread_mutex_unlock(&retryLock.m);
 	pthread_cond_broadcast(&retryLock.c);
+	pthread_mutex_unlock(&retryLock.m);
+	std::cout<<"LockClient: client: "<<id<<" is asked to retry lock:"<<lid<<std::endl;
 	return rlock_protocol::OK;
 }
 

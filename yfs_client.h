@@ -61,6 +61,7 @@ class lock_release_user_impl: public lock_release_user{
   bool isdir(inum);
   inum ilookup(inum parentID, std::string name);
   inum lookup(inum parentID, std::string name);
+  
   int removeFile(inum parentID, std::string fileName); 
   int write(inum fileID, std::string buf,int size,  int off );  
   int setattr(inum fileID, fileinfo fin);
