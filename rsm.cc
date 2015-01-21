@@ -213,7 +213,10 @@ rsm::join(std::string m) {
     return false;
   }
   printf("rsm::join: succeeded %s\n", r.log.c_str());
+
+  printf("rsm::join return\n");
   cfg->restore(r.log);
+  //printf("rsm::join return\n");
   return true;
 }
 
@@ -226,10 +229,12 @@ rsm::join(std::string m) {
 void 
 rsm::commit_change() 
 {
-  pthread_mutex_lock(&rsm_mutex);
-  // Lab 7:
-  // - If I am not part of the new view, start recovery
-  pthread_mutex_unlock(&rsm_mutex);
+	pthread_mutex_lock(&rsm_mutex);
+  	// Lab 7:
+  	// - If I am not part of the new view, start recovery
+  	//wake up recovery thread
+	pthread_cond_signal(&recovery_cond);
+	pthread_mutex_unlock(&rsm_mutex);
 }
 
 
@@ -292,19 +297,28 @@ rsm::transferdonereq(std::string m, int &r)
 rsm_protocol::status
 rsm::joinreq(std::string m, viewstamp last, rsm_protocol::joinres &r)
 {
-  int ret = rsm_client_protocol::OK;
+ 	int ret = rsm_client_protocol::OK;
 
-  assert (pthread_mutex_lock(&rsm_mutex) == 0);
-  printf("joinreq: src %s last (%d,%d) mylast (%d,%d)\n", m.c_str(), 
-	 last.vid, last.seqno, last_myvs.vid, last_myvs.seqno);
-  if (cfg->ismember(m)) {
-    printf("joinreq: is still a member\n");
-    r.log = cfg->dump();
-  } else if (cfg->myaddr() != primary) {
-    printf("joinreq: busy\n");
-    ret = rsm_client_protocol::BUSY;
-  } else {
-    // Lab 7: invoke config to create a new view that contains m
+  	assert (pthread_mutex_lock(&rsm_mutex) == 0);
+  	printf("joinreq: src %s last (%d,%d) mylast (%d,%d)\n", m.c_str(), 
+	 	last.vid, last.seqno, last_myvs.vid, last_myvs.seqno);
+  	if (cfg->ismember(m)) {
+    	printf("joinreq: is still a member\n");
+    	r.log = cfg->dump();
+  	} 
+	else if (cfg->myaddr() != primary) {
+    	printf("joinreq: busy\n");
+    	ret = rsm_client_protocol::BUSY;
+  	} 
+	else {
+    	// Lab 7: invoke config to create a new view that contains m
+		if(cfg->add(m)){
+			printf("rsm::joinreq: succeed to add %s\n",m.c_str());
+		}
+		else{
+			printf("rsm::joinreq: fail to add %s\n",m.c_str());
+			ret = rsm_client_protocol::ERR;
+		}
   }
   assert (pthread_mutex_unlock(&rsm_mutex) == 0);
   return ret;
