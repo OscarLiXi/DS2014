@@ -5,7 +5,9 @@
 #include "lock_protocol.h"
 #include "rpc.h"
 #include "lock_server.h"
+
 #include "rsm.h"
+
 struct retryMsg{
 	lock_protocol::lockid_t lid;
 	std::string clientId;
@@ -29,14 +31,16 @@ class lock_server_cache : public lock_server {
   lock_t revokeLock;
   lock_t retryLock;
  public:
-  lock_server_cache();
+
   lock_server_cache(class rsm *rsm = 0);
+  lock_server_cache();
   ~lock_server_cache();
 
   //lock_protocol::status stat(std::string, lock_protocol::lockid_t, int &);
   lock_protocol::status stat(lock_protocol::lockid_t, int &);
   lock_protocol::status acquire(std::string, int, lock_protocol::lockid_t , int &);
   lock_protocol::status release(std::string, int, lock_protocol::lockid_t , int &);
+
   void revoker();
   void retryer();
 };
