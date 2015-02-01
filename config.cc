@@ -142,7 +142,7 @@ config::paxos_commit(unsigned instance, std::string value)
       mgr.delete_handle(mems[i]);
     }
   }
-
+  
   mems = newmem;
   myvid = instance;
   if (vc) {
@@ -150,6 +150,7 @@ config::paxos_commit(unsigned instance, std::string value)
     vc->commit_change();
     assert(pthread_mutex_lock(&cfg_mutex)==0);
   }
+  printf("config::paxos_commit get here!\n");
   assert(pthread_mutex_unlock(&cfg_mutex)==0);
 }
 
@@ -335,6 +336,7 @@ config::doheartbeat(std::string m)
 	ret == rpc_const::oldsrv_failure) {
       mgr.delete_handle(m);
     } else {
+      printf("doheartbeat: ret value:%d\n", paxos_protocol::ERR);
       printf("doheartbeat: problem with %s (%d) my vid %d his vid %d\n", 
 	     m.c_str(), ret, vid, r);
       if (ret < 0) res = FAILURE;
