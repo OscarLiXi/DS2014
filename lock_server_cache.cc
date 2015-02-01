@@ -110,7 +110,7 @@ lock_protocol::status lock_server_cache::acquire(std::string clientId, int seqNu
 	        //for (std::list<lock_protocol::lockid_t>::iterator it=revokeList.begin(); it != revokeList.end(); ++it)
 	        //	std::cout << ' ' << *it;
 		//std::cout<<std::endl;
-		if (rsm->amiprimary())
+		if (rsm->amiprimary() == 1)
 		{
 			cout<<"LockServer: Primary call revoke"<<std::endl;
 			pthread_cond_signal(&revokeLock.c);
@@ -165,9 +165,9 @@ lock_protocol::status lock_server_cache::release(std::string clientId, int seqNu
 	//Add the lock to retryList, wakeup the retryer thread
 	pthread_mutex_lock(&retryLock.m);		
 	retryList.push_back(lid);
-	if (rsm->amiprimary())
+	if (rsm->amiprimary() == 1)
 	{
-		cout<<"LockServer: Primary call revoke"<<std::endl;
+		cout<<"LockServer: Primary call retry"<<std::endl;
 		pthread_cond_signal(&retryLock.c);
 	}	
 	pthread_mutex_unlock(&retryLock.m);
@@ -194,6 +194,7 @@ lock_server_cache::revoker()
 		pthread_mutex_lock(&revokeLock.m);
 		while(revokeList.empty()) //When list is empty, sleep the thread
 			pthread_cond_wait(&revokeLock.c, &revokeLock.m);
+
 		//Pop out the first element
 		lid = revokeList.front();
 		revokeList.pop_front();
@@ -217,7 +218,9 @@ lock_server_cache::revoker()
 		int r;
 		rlock_protocol::status ret;
 		std::map<std::string, rpcc*>::iterator rpcIt = clientToRpcc.find(clid); // find rpcc in our rpcc map
+		
 		if (rpcIt == clientToRpcc.end()){
+			
 			sockaddr_in dstsock;
 			make_sockaddr(clid.c_str(), &dstsock);
 			rpcc *newRpcc = new rpcc(dstsock); //FIXME: how to free it?
@@ -226,6 +229,7 @@ lock_server_cache::revoker()
 		  	}
 			clientToRpcc[clid] = newRpcc; //Insert this rpcc into our map
 			ret = newRpcc->call(rlock_protocol::revoke, lid, r); //FIXME: what if ret is RPCERR?
+			//cout<<"enter revoker!"<<std::endl;
 			if (ret != rlock_protocol::OK)
 				std::cout<<"LockServer: revoker call might not succeed!"<<std::endl;
 			else

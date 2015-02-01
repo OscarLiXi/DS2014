@@ -30,7 +30,7 @@ lock_client_cache::lock_client_cache(std::string xdst,
   	//cl = new rpcc(dstsock);
 
 	//for lab 8
-	cl = new rsm_client(xdst);
+	rsm_cl = new rsm_client(xdst);
   	//if (cl->bind() < 0) {
     	//	printf("lock_client: call bind\n");
   	//}
@@ -62,7 +62,7 @@ lock_client_cache::lock_client_cache(std::string xdst,
 
 lock_client_cache::~lock_client_cache() 
 {
-	delete cl;
+	delete rsm_cl;
 }
 
 
@@ -119,7 +119,7 @@ lock_client_cache::releaser()
 				int r;
 				//calling extent_client to flush extents cache before lock release
 				lu->dorelease(lid);
-				lock_protocol::status response = cl->call(lock_protocol::release, id, tempseqNum, lid, r);
+				lock_protocol::status response = rsm_cl->call(lock_protocol::release, id, tempseqNum, lid, r);
 				
 				if (response != lock_protocol::OK){
 					std::cout<<"Release failed!"<<std::endl;
@@ -197,7 +197,7 @@ lock_client_cache::acquire(lock_protocol::lockid_t lid)
 			pthread_mutex_unlock(&seqLock);
 			while (1){
 				int r;
-				lock_protocol::status response = cl->call(lock_protocol::acquire, id, tempSeq, lid, r);
+				lock_protocol::status response = rsm_cl->call(lock_protocol::acquire, id, tempSeq, lid, r);
 				std::cout<<"Client: "<<id<<" acquire lock: "<<lid<<" with seqNum: "<<tempSeq<<std::endl;
 				if (response == lock_protocol::OK){ //Server granted lock
 					

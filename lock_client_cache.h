@@ -84,7 +84,7 @@ struct lock_t{
 class lock_client_cache : public lock_client {
  private:
 
-  rsm_client *cl;
+  rsm_client *rsm_cl;
 
   class lock_release_user *lu;
   int rlock_port;

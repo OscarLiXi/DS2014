@@ -561,7 +561,7 @@ if ($do_run[7]) {
 
 if ($do_run[8]) {
   print "test8: start 3-process lock service\n";
-	start_nodes(3,"ls");
+	start_nodes(1,"ls");
   
   print "Start lock_tester $p[0]\n";
   $t = spawn("./lock_tester", $p[0]);
