@@ -25,6 +25,9 @@ retrythread(void *x)
 lock_server_cache::lock_server_cache(class rsm *_rsm) 
   : rsm (_rsm)
 {
+
+  rsm = _rsm;
+
   //Initialize the lock
   assert(pthread_mutex_init(&stateLock,0)==0);
   assert(pthread_mutex_init(&holderLock,0)==0);
@@ -49,9 +52,9 @@ lock_server_cache::~lock_server_cache()
 	locks.clear();
 }
 
-lock_protocol::status lock_server_cache::stat(std::string port, lock_protocol::lockid_t, int &r)
+lock_protocol::status lock_server_cache::stat(lock_protocol::lockid_t, int &r)
 {
-	std::cout<<"stat request from port:"<<port<<std::endl;
+	//std::cout<<"stat request from port:"<<port<<std::endl;
 	r = 0;
 	return lock_protocol::OK;
 }
@@ -107,7 +110,11 @@ lock_protocol::status lock_server_cache::acquire(std::string clientId, int seqNu
 	        //for (std::list<lock_protocol::lockid_t>::iterator it=revokeList.begin(); it != revokeList.end(); ++it)
 	        //	std::cout << ' ' << *it;
 		//std::cout<<std::endl;
-		pthread_cond_signal(&revokeLock.c);
+		if (rsm->amiprimary())
+		{
+			cout<<"LockServer: Primary call revoke"<<std::endl;
+			pthread_cond_signal(&revokeLock.c);
+		}
 		pthread_mutex_unlock(&revokeLock.m);
 
 		//Add it to waitList
@@ -158,7 +165,11 @@ lock_protocol::status lock_server_cache::release(std::string clientId, int seqNu
 	//Add the lock to retryList, wakeup the retryer thread
 	pthread_mutex_lock(&retryLock.m);		
 	retryList.push_back(lid);
-	pthread_cond_signal(&retryLock.c);	
+	if (rsm->amiprimary())
+	{
+		cout<<"LockServer: Primary call revoke"<<std::endl;
+		pthread_cond_signal(&retryLock.c);
+	}	
 	pthread_mutex_unlock(&retryLock.m);
 	
 	cout<<"LockServer: Client "<<clientId<<" release lock: "<<lid<<std::endl;

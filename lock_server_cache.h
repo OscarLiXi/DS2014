@@ -8,7 +8,6 @@
 
 #include "rsm.h"
 
-
 struct retryMsg{
 	lock_protocol::lockid_t lid;
 	std::string clientId;
@@ -37,8 +36,8 @@ class lock_server_cache : public lock_server {
   lock_server_cache();
   ~lock_server_cache();
 
-  lock_protocol::status stat(std::string, lock_protocol::lockid_t, int &);
-
+  //lock_protocol::status stat(std::string, lock_protocol::lockid_t, int &);
+  lock_protocol::status stat(lock_protocol::lockid_t, int &);
   lock_protocol::status acquire(std::string, int, lock_protocol::lockid_t , int &);
   lock_protocol::status release(std::string, int, lock_protocol::lockid_t , int &);
 

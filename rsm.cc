@@ -125,12 +125,13 @@ rsm::rsm(std::string _first, std::string _me)
   testsvr = new rpcs(atoi(_me.c_str()) + 1);
   testsvr->reg(rsm_test_protocol::net_repair, this, &rsm::test_net_repairreq);
   testsvr->reg(rsm_test_protocol::breakpoint, this, &rsm::breakpointreq);
-
+  //printf("rsm::rsm change before lock!\n");
   assert(pthread_mutex_lock(&rsm_mutex)==0);
-
+  
   assert(pthread_create(&th, NULL, &recoverythread, (void *) this) == 0);
 
   assert(pthread_mutex_unlock(&rsm_mutex)==0);
+  //printf("rsm::rsm change after lock!\n");
 }
 
 void
@@ -155,6 +156,7 @@ rsm::recovery()
 	printf("recovery: joined\n");
       } else {
 	assert(pthread_mutex_unlock(&rsm_mutex)==0);
+	printf("rsm::recovery go to sleep(30)\n");
 	sleep (30); // XXX make another node in cfg primary?
 	assert(pthread_mutex_lock(&rsm_mutex)==0);
       }
@@ -231,9 +233,12 @@ rsm::join(std::string m) {
   if (h.get_rpcc() != 0) {
     printf("rsm::join: %s mylast (%d,%d)\n", m.c_str(), last_myvs.vid, 
 	   last_myvs.seqno);
+    //printf("rsm::join before unlock!\n");
     assert(pthread_mutex_unlock(&rsm_mutex)==0);
+    
     ret = h.get_rpcc()->call(rsm_protocol::joinreq, cfg->myaddr(), last_myvs, 
 			     r, rpcc::to(120000));
+    //printf("rsm::join after unlock!\n");
     assert(pthread_mutex_lock(&rsm_mutex)==0);
   }
   if (h.get_rpcc() == 0 || ret != rsm_protocol::OK) {
@@ -243,6 +248,7 @@ rsm::join(std::string m) {
   }
   printf("rsm::join: succeeded %s\n", r.log.c_str());
   cfg->restore(r.log);
+  
   return true;
 }
 
@@ -255,6 +261,7 @@ rsm::join(std::string m) {
 void 
 rsm::commit_change() 
 {
+
   //printf("rsm::commit_change: require rsm_mutex lock!\n");
   //pthread_mutex_lock(&rsm_mutex);
   //printf("rsm::commit_change: get rsm_mutex lock!\n");
@@ -395,12 +402,15 @@ rsm_protocol::status
 rsm::joinreq(std::string m, viewstamp last, rsm_protocol::joinres &r)
 {
   int ret = rsm_client_protocol::OK;
-
+  //printf("rsm::joinreq change before lock!\n");
+  //std::cout<<"rsm::joinreq my thread id: "<<pthread_self()<<std::endl;  
+  //printf("rsm::joinreq my thread id:%d\n", pthread_self());
   assert (pthread_mutex_lock(&rsm_mutex) == 0);
   printf("joinreq: src %s last (%d,%d) mylast (%d,%d)\n", m.c_str(), 
 	 last.vid, last.seqno, last_myvs.vid, last_myvs.seqno);
   if (cfg->ismember(m)) {
     printf("joinreq: is still a member\n");
+
     r.log = cfg->dump();
   } else if (cfg->myaddr() != primary) {
     printf("joinreq: busy\n");
@@ -420,6 +430,7 @@ rsm::joinreq(std::string m, viewstamp last, rsm_protocol::joinres &r)
   } 
   //pthread_mutex_lock(&rsm_mutex);
   assert (pthread_mutex_unlock(&rsm_mutex) == 0);
+  //printf("rsm::joinreq change after lock!\n");
   return ret;
 }
 
@@ -478,9 +489,11 @@ rsm::amiprimary_wo()
 bool
 rsm::amiprimary()
 {
+  //printf("rsm::amiprimary change before lock!\n");
   assert(pthread_mutex_lock(&rsm_mutex)==0);
   bool r = amiprimary_wo();
   assert(pthread_mutex_unlock(&rsm_mutex)==0);
+  //printf("rsm::amiprimary change after lock!\n");
   return r;
 }
 

@@ -24,12 +24,16 @@ lock_client_cache::lock_client_cache(std::string xdst,
 {
 
 	//Create a new rpc client
-	sockaddr_in dstsock;
-  	make_sockaddr(xdst.c_str(), &dstsock);
-  	cl = new rpcc(dstsock);
-  	if (cl->bind() < 0) {
-    		printf("lock_client: call bind\n");
-  	}
+
+	//sockaddr_in dstsock;
+  	//make_sockaddr(xdst.c_str(), &dstsock);
+  	//cl = new rpcc(dstsock);
+
+	//for lab 8
+	cl = new rsm_client(xdst);
+  	//if (cl->bind() < 0) {
+    	//	printf("lock_client: call bind\n");
+  	//}
 
 	assert(pthread_mutex_init(&lockStatusLock,0)==0);
 	assert(pthread_mutex_init(&lockSeqLock,0)==0);
