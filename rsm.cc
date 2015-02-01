@@ -261,6 +261,7 @@ rsm::commit_change()
   // Lab 7:
   // - If I am not part of the new view, start recovery
   set_primary();
+  inviewchange = false;
   pthread_mutex_unlock(&rsm_mutex);
   if(!cfg->ismember(cfg->myaddr()))
   	pthread_cond_broadcast(&recovery_cond); 
@@ -292,9 +293,47 @@ rsm::execute(int procno, std::string req)
 rsm_client_protocol::status
 rsm::client_invoke(int procno, std::string req, std::string &r)
 {
-  int ret = rsm_protocol::OK;
-  // For lab 8
-  return ret;
+  	// For lab 8
+  	pthread_mutex_lock(&invoke_mutex);
+	int ret = rsm_client_protocol::OK;
+
+	if(inviewchange){
+		ret = rsm_client_protocol::BUSY;
+		goto release;
+	}
+	if(!amiprimary()){
+		ret = rsm_client_protocol::NOTPRIMARY;
+		goto release;
+	}
+	viewstamp vs = viewstamp(myvs.vid, myvs.seqno++);	
+	vector<string> cur_view = cfg->get_curview();
+	//forward request to slaves, wait till receive OK from all the slaves
+	for(int i = 0; i < cur_view.size(); i++){
+		//only forward request to slaves
+		if(cfg->myaddr() == cur_view[i])	
+			continue;
+		handle h(cur_view[i]);
+		if(h.get_rpcc()){
+			int r_dummy;
+			if(h.get_rpcc()->call(rsm_client_protocol::invoke, vs, req, r_dummy)
+			 		!= rsm_client_protocol::OK ){
+				
+				printf("rsm::client_invoke: RPC failed!\n");
+				ret = rsm_client_protocol::ERR;
+				goto release;
+			}
+		}
+		else{
+			printf("rsm::client_invoke: get_rpcc() failed!\n");
+			ret = rsm_client_protocol::ERR;	
+			goto release;
+		}
+	}
+	//execute request locally
+	execute(procno, req);
+release:
+  	pthread_mutex_unlock(&invoke_mutex);
+  	return ret;
 }
 
 // 
@@ -307,9 +346,19 @@ rsm::client_invoke(int procno, std::string req, std::string &r)
 rsm_protocol::status
 rsm::invoke(int proc, viewstamp vs, std::string req, int &dummy)
 {
-  rsm_protocol::status ret = rsm_protocol::OK;
-  // For lab 8
-  return ret;
+  	// For lab 8
+  	// check if it is a slave in current view
+  	if(!cfg->ismember(cfg->myaddr()) || amiprimary()){
+  		printf("rsm::invoke: not a slave in current view\n");
+		return rsm_client_protocol::ERR;
+  	}
+	if(vs.seqno != lastvs.seqno + 1){
+		printf("rsm::invoke: not an expected request\n");
+		return rsm_client_protocol::ERR;
+	}
+	execute(proc,req);
+	lastvs = vs;
+  	return rsm_client_protocol::OK;
 }
 
 /**
