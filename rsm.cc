@@ -323,7 +323,7 @@ rsm::client_invoke(int procno, std::string req, std::string &r)
 		handle h(cur_view[i]);
 		if(h.get_rpcc()){
 			int r_dummy;
-			if(h.get_rpcc()->call(rsm_client_protocol::invoke, vs, req, r_dummy)
+			if(h.get_rpcc()->call(rsm_protocol::invoke, procno, vs, req, r_dummy)
 			 		!= rsm_client_protocol::OK ){
 				
 				printf("rsm::client_invoke: RPC failed!\n");
@@ -339,6 +339,7 @@ rsm::client_invoke(int procno, std::string req, std::string &r)
 	}
 	//execute request locally
 	execute(procno, req);
+	printf("rsm::client_invoke: after execute()\n");
 release:
   	pthread_mutex_unlock(&invoke_mutex);
   	return ret;
