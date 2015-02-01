@@ -480,10 +480,12 @@ if ($do_run[6]) {
   foreach my $port (@v6) {
     $in_views{$port}++;
   }
+  print "start wait for view change v6\n";
   foreach my $port (@v6) {
     wait_for_view_change(paxos_log($port), $in_views{$port}+1, $port, 20);
   }
 
+  print "start wait for view change v7\n";
   # final will be (2,3,4)
   my @lastv = ($p[1],$p[2],$p[3]);
   foreach my $port (@lastv) {

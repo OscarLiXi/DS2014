@@ -68,6 +68,17 @@ class lock_release_user {
 // has been received.
 //
 
+struct lock_t{
+	lock_t(){
+		pthread_mutex_init(&m,NULL);
+		pthread_cond_init(&c,NULL);
+		isLocked = false;
+	}
+	pthread_mutex_t m;
+	pthread_cond_t c;
+	bool isLocked;
+};
+
 
 class lock_client_cache : public lock_client {
  private:
@@ -75,14 +86,37 @@ class lock_client_cache : public lock_client {
   int rlock_port;
   std::string hostname;
   std::string id;
+ 
+  int seqNum;
+
+  std::map<lock_protocol::lockid_t, int> lockStatusMap; //The status of each lock
+  std::map<lock_protocol::lockid_t, int> lockSeqMap; //The seqNum of each lock
+  std::list<lock_protocol::lockid_t> releaseList; //Lock to be released
+  std::list<lock_protocol::lockid_t> retryList; //lock to be retried
+
+  lock_t releaseLock;
+  lock_t retryLock;
+  lock_t clientLock; // lock to acquire and release (we might not need it)
+
+  pthread_mutex_t lockStatusLock;
+  pthread_mutex_t lockSeqLock;
+  pthread_mutex_t seqLock;
+
+  int isInList(std::list<lock_protocol::lockid_t>, lock_protocol::lockid_t);
+
+  enum xxstatus {None, Free, Locked, Acquiring, Releasing}; //Satuts
 
  public:
   static int last_port;
-  lock_client_cache(std::string xdst, class lock_release_user *l = 0);
-  virtual ~lock_client_cache() {};
+  lock_client_cache(std::string xdst, class lock_release_user *lu = 0);
+  virtual ~lock_client_cache();
   lock_protocol::status acquire(lock_protocol::lockid_t);
   virtual lock_protocol::status release(lock_protocol::lockid_t);
   void releaser();
+
+  rlock_protocol::status revoke(lock_protocol::lockid_t, int &);
+  rlock_protocol::status retry(lock_protocol::lockid_t, int &);
+  
 };
 #endif
 

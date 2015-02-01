@@ -1,6 +1,8 @@
 #ifndef rpc_h
 #define rpc_h
 
+#include <unistd.h>
+
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <list>
