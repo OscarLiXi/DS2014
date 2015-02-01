@@ -303,7 +303,8 @@ rsm::client_invoke(int procno, std::string req, std::string &r)
   	// For lab 8
   	pthread_mutex_lock(&invoke_mutex);
 	int ret = rsm_client_protocol::OK;
-
+	viewstamp vs;
+	std::vector<std::string> cur_view;
 	if(inviewchange){
 		ret = rsm_client_protocol::BUSY;
 		goto release;
@@ -312,8 +313,8 @@ rsm::client_invoke(int procno, std::string req, std::string &r)
 		ret = rsm_client_protocol::NOTPRIMARY;
 		goto release;
 	}
-	viewstamp vs = viewstamp(myvs.vid, myvs.seqno++);	
-	vector<string> cur_view = cfg->get_curview();
+	vs = viewstamp(myvs.vid, myvs.seqno++);	
+	cur_view = cfg->get_curview();
 	//forward request to slaves, wait till receive OK from all the slaves
 	for(int i = 0; i < cur_view.size(); i++){
 		//only forward request to slaves
@@ -359,12 +360,12 @@ rsm::invoke(int proc, viewstamp vs, std::string req, int &dummy)
   		printf("rsm::invoke: not a slave in current view\n");
 		return rsm_client_protocol::ERR;
   	}
-	if(vs.seqno != lastvs.seqno + 1){
+	if(vs.seqno != last_myvs.seqno + 1){
 		printf("rsm::invoke: not an expected request\n");
 		return rsm_client_protocol::ERR;
 	}
 	execute(proc,req);
-	lastvs = vs;
+	last_myvs = vs;
   	return rsm_client_protocol::OK;
 }
 
