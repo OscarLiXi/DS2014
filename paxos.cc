@@ -241,7 +241,8 @@ proposer::decide(unsigned instance, std::vector<std::string> accepts,
 	arg.instance = instance;
 	arg.v = v;
 	printf("proposer::decide: v=%s\n",v.c_str());
-	fflush(stdout);
+
+        fflush(stdout);
 	for(int i = 0; i < accepts.size(); i++){
 		handle h(accepts[i]);
 		if(h.get_rpcc()){
@@ -254,7 +255,6 @@ proposer::decide(unsigned instance, std::vector<std::string> accepts,
 			printf("proposer::decide: get_rpcc() failed\n");
 		}
 	}
-	printf("proposer::decide: done!\n");
 }
 
 acceptor::acceptor(class paxos_change *_cfg, bool _first, std::string _me, 
@@ -304,7 +304,7 @@ acceptor::preparereq(std::string src, paxos_protocol::preparearg a,
 	}
 	else{
 		r.accept = 0;
-		r.oldinstance = 0;		
+		r.oldinstance = 0;
 		printf("acceptor::preparereq: rejected!\n");
 	}
 	// handle a preparereq message from proposer
@@ -328,6 +328,7 @@ acceptor::acceptreq(std::string src, paxos_protocol::acceptarg a, int &r)
 		printf("acceptor::acceptreq: accept instance=%d, value=%s\n",a.instance,a.v.c_str());
 	}
 	else{
+		r = 0;
 		printf("acceptor::acceptreq: reject!\n");
 	}
   	return paxos_protocol::OK;

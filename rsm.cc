@@ -232,16 +232,16 @@ rsm::join(std::string m) {
 void 
 rsm::commit_change() 
 {
-  //std::cout<<"rsm::commit_change my thread id: "<<pthread_self()<<std::endl;
-  //printf("rsm::commit change before lock!\n");
+
+  //printf("rsm::commit_change: require rsm_mutex lock!\n");
   //pthread_mutex_lock(&rsm_mutex);
+  //printf("rsm::commit_change: get rsm_mutex lock!\n");
   // Lab 7:
   // - If I am not part of the new view, start recovery
   set_primary();
-  inviewchange = true;
-  //pthread_cond_broadcast(&recovery_cond); 
   //pthread_mutex_unlock(&rsm_mutex);
-  //printf("rsm::commit change after lock!\n");
+  if(!cfg->ismember(cfg->myaddr()))
+  	pthread_cond_broadcast(&recovery_cond); 
 }
 
 
@@ -321,17 +321,17 @@ rsm::joinreq(std::string m, viewstamp last, rsm_protocol::joinres &r)
   } else {
     // Lab 7: invoke config to create a new view that contains m
 		inviewchange = true;
-		//assert (pthread_mutex_unlock(&rsm_mutex) == 0);
+	 	//pthread_mutex_unlock(&rsm_mutex);	
 		if( cfg->add(m)){
 			r.log = cfg->dump();
-			printf("rsm::joinreq: call config to add %s success\n",m.c_str());
+			//printf("rsm::joinreq: call config to add %s success\n",m.c_str());
 		}
 		else {
 			printf("rsm::joinreq: call config to add %s fail\n",m.c_str());
 			ret = rsm_client_protocol::ERR;
 		}
-		//assert (pthread_mutex_lock(&rsm_mutex) == 0);
-  }
+  } 
+  //pthread_mutex_lock(&rsm_mutex);
   assert (pthread_mutex_unlock(&rsm_mutex) == 0);
   //printf("rsm::joinreq change after lock!\n");
   return ret;
