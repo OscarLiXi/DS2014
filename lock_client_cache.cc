@@ -83,12 +83,13 @@ lock_client_cache::releaser()
 		while(releaseList.empty()){
 			pthread_cond_wait(&releaseLock.c, &releaseLock.m);
 		}
+		//std::cout<<"client lock1"<<std::endl;
 		pthread_mutex_unlock(&releaseLock.m);
 
 		std::list<lock_protocol::lockid_t>::iterator it;
-		std::cout<<"client lock1"<<std::endl;
+		
 		pthread_mutex_lock(&clientLock.m);
-		std::cout<<"client lock2"<<std::endl;
+		//std::cout<<"client lock2"<<std::endl;
 		for (it = releaseList.begin(); it != releaseList.end(); ){
 			
 			lid = *it;
@@ -110,17 +111,16 @@ lock_client_cache::releaser()
 			}
 			else
 				statusNum = lockStatusMap[lid];
-			printf("LockClient: Releaser: lockid=%d, lock status=%d\n",lid,statusNum);	
+			//printf("LockClient: Releaser: lockid=%d, lock status=%d\n",lid,statusNum);	
 			pthread_mutex_unlock(&lockStatusLock);
-
+			
 			if (statusNum == Free || statusNum == Releasing){
 				//std::cout<<"releaser: statusNum: "<<statusNum<<std::endl;
 				//std::cout<<"releaser: statusNum2: "<<statusNum<<std::endl;
 				int r;
 				//calling extent_client to flush extents cache before lock release
-				lu->dorelease(lid);
+				//lu->dorelease(lid);
 				lock_protocol::status response = rsm_cl->call(lock_protocol::release, id, tempseqNum, lid, r);
-				
 				if (response != lock_protocol::OK){
 					std::cout<<"Release failed!"<<std::endl;
 					return;
@@ -210,10 +210,10 @@ lock_client_cache::acquire(lock_protocol::lockid_t lid)
 					goto RELEASE_LOCK;
 				}
 				else if (response == lock_protocol::RETRY){ //FIXME: what if RPCERR?
-					pthread_mutex_unlock(&clientLock.m);
-					pthread_mutex_lock(&lockStatusLock);
-					lockStatusMap[lid] = None;
-					pthread_mutex_unlock(&lockStatusLock);
+					pthread_mutex_unlock(&clientLock.m); //FIXME: can not pass lock_tester 4 in lab 8, fixed it by comment out following 3 lines, still need to test it to pass lab 6
+					//pthread_mutex_lock(&lockStatusLock);
+					//lockStatusMap[lid] = None;
+					//pthread_mutex_unlock(&lockStatusLock);
 					pthread_mutex_lock(&retryLock.m);
 					//first we find if this lock is in our retryList
 					std::cout<<"LockClient: client: "<<id<<" is waiting to retry lock:"<<lid<<std::endl;
@@ -263,7 +263,7 @@ lock_client_cache::release(lock_protocol::lockid_t lid)
 	pthread_mutex_lock(&lockStatusLock);
 	std::map<lock_protocol::lockid_t, int>::iterator it = lockStatusMap.find(lid);
 	if (it->second != Locked && it->second != Free){
-		std::cout<<"lockClient: Release lock: "<<lid<<" error, not locked or free!"<<std::endl;
+		std::cout<<"lockClient: Release lock: "<<lid<<" error, not locked or free, status:"<<it->second<<std::endl;
 		pthread_mutex_unlock(&lockStatusLock);
 		ret = lock_protocol::IOERR;
 		goto RELEASE_LOCK;

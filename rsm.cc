@@ -288,6 +288,8 @@ rsm::execute(int procno, std::string req)
   marshall rep1;
   rep1 << ret;
   rep1 << rep.str();
+
+  //std::cout<<"rsm::excute return:"<<rep1.str()<<std::endl;
   return rep1.str();
 }
 
@@ -338,7 +340,7 @@ rsm::client_invoke(int procno, std::string req, std::string &r)
 		}
 	}
 	//execute request locally
-	execute(procno, req);
+	r = execute(procno, req);
 	printf("rsm::client_invoke: after execute()\n");
 release:
   	pthread_mutex_unlock(&invoke_mutex);
