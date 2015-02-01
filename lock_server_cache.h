@@ -14,6 +14,7 @@ struct retryMsg{
 
 class lock_server_cache : public lock_server {
  private:
+  class rsm *rsm;
   std::map<lock_protocol::lockid_t,std::string> lockToClient;
   std::map<std::string, rpcc*> clientToRpcc;
   std::list<lock_protocol::lockid_t> revokeList;
@@ -29,10 +30,11 @@ class lock_server_cache : public lock_server {
   lock_t retryLock;
  public:
   lock_server_cache();
+  lock_server_cache(class rsm *rsm = 0);
   ~lock_server_cache();
 
-  lock_protocol::status stat(std::string, lock_protocol::lockid_t, int &);
-
+  //lock_protocol::status stat(std::string, lock_protocol::lockid_t, int &);
+  lock_protocol::status stat(lock_protocol::lockid_t, int &);
   lock_protocol::status acquire(std::string, int, lock_protocol::lockid_t , int &);
   lock_protocol::status release(std::string, int, lock_protocol::lockid_t , int &);
   void revoker();

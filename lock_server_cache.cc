@@ -49,9 +49,9 @@ lock_server_cache::~lock_server_cache()
 	locks.clear();
 }
 
-lock_protocol::status lock_server_cache::stat(std::string port, lock_protocol::lockid_t, int &r)
+lock_protocol::status lock_server_cache::stat(lock_protocol::lockid_t, int &r)
 {
-	std::cout<<"stat request from port:"<<port<<std::endl;
+	//std::cout<<"stat request from port:"<<port<<std::endl;
 	r = 0;
 	return lock_protocol::OK;
 }
