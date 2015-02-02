@@ -147,13 +147,17 @@ void
 rsm::recovery()
 {
   bool r = false;
-
+  inviewchange = true;
   assert(pthread_mutex_lock(&rsm_mutex)==0);
 
   while (1) {
     while (!cfg->ismember(cfg->myaddr())) {
       if (join(primary)) {
-	printf("recovery: joined\n");
+		printf("recovery: joined\n");
+		if(primary == cfg->myaddr())
+           r = sync_with_backups();
+        else
+           r = sync_with_primary();	
       } else {
 	assert(pthread_mutex_unlock(&rsm_mutex)==0);
 	printf("rsm::recovery go to sleep(30)\n");
@@ -173,7 +177,29 @@ bool
 rsm::sync_with_backups()
 {
   // For lab 8
-  return true;
+  // For lab 8
+        bool ret = true;
+        assert(pthread_mutex_lock(&rsm_mutex) == 0);
+        std::vector<std::string> cur_view = cfg->get_curview();
+        for(int i = 0; i < cur_view.size(); i++){
+                if(primary == cur_view[i])
+                        continue;
+                handle h(cur_view[i]);
+                if(h.get_rpcc()){
+                        int r = 0;
+                        if(h.get_rpcc()->call(rsm_protocol::transferdonereq,
+                                        cfg->myaddr(), r, rpcc::to(1000)) != rsm_protocol::OK ){
+
+                                printf("rsm::sync_with_backups: RPC failed!\n");
+                        }
+                }
+                else{
+                        printf("rsm::sync_with_backups: get_rpcc() failed!\n");
+                }
+        }
+
+        assert(pthread_mutex_unlock(&rsm_mutex) == 0);
+        return ret;
 }
 
 
@@ -181,9 +207,39 @@ bool
 rsm::sync_with_primary()
 {
   // For lab 8
-  return true;
+assert(pthread_mutex_lock(&rsm_mutex) == 0);
+        bool r = statetransfer(primary);
+        assert(pthread_mutex_unlock(&rsm_mutex) == 0);
+        return r;
+}
+/*rsm_protocol::status
+rsm::transferreq(std::string src, viewstamp last, rsm_protocol::transferres &r){
+
+        assert(pthread_mutex_lock(&rsm_mutex) == 0);
+        r.state = stf->marshal_state();
+        r.last = last_myvs;
+        assert(pthread_mutex_unlock(&rsm_mutex) == 0);
+        return rsm_protocol::OK;
+}*/
+
+bool
+rsm::donereq(std::string m, int &r)
+{
+  int ret = rsm_client_protocol::OK;
+  assert (pthread_mutex_lock(&rsm_mutex) == 0);
+  // For lab 8
+  assert (pthread_mutex_unlock(&rsm_mutex) == 0);
+  return ret;
 }
 
+/*rsm_protocol::status
+rsm::transferdonereq(std::string m, int &r){
+
+        if(donereq(m,r))
+                return rsm_protocol::OK;
+        else
+                return rsm_protocol::ERR;
+}*/
 
 /**
  * Call to transfer state from m to the local node.
@@ -268,10 +324,7 @@ rsm::commit_change()
   // Lab 7:
   // - If I am not part of the new view, start recovery
   set_primary();
-  inviewchange = false;
-  pthread_mutex_unlock(&rsm_mutex);
-  if(!cfg->ismember(cfg->myaddr()))
-  	pthread_cond_broadcast(&recovery_cond); 
+  pthread_cond_broadcast(&recovery_cond); 
 }
 
 
@@ -325,18 +378,18 @@ rsm::client_invoke(int procno, std::string req, std::string &r)
 		handle h(cur_view[i]);
 		if(h.get_rpcc()){
 			int r_dummy;
-			if(h.get_rpcc()->call(rsm_protocol::invoke, procno, vs, req, r_dummy)
-			 		!= rsm_client_protocol::OK ){
+			if(h.get_rpcc()->call(rsm_protocol::invoke, procno, 
+				vs, req, r_dummy, rpcc::to(1000)) != rsm_client_protocol::OK ){
 				
 				printf("rsm::client_invoke: RPC failed!\n");
-				ret = rsm_client_protocol::ERR;
-				goto release;
+				while(!cfg->remove(cur_view[i])) ;
+				continue;
 			}
 		}
 		else{
 			printf("rsm::client_invoke: get_rpcc() failed!\n");
-			ret = rsm_client_protocol::ERR;	
-			goto release;
+			while(!cfg->remove(cur_view[i])) ;
+			continue;
 		}
 	}
 	//execute request locally

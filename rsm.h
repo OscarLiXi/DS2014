@@ -58,6 +58,7 @@ class rsm : public config_view_change {
               std::string &r);
   bool statetransfer(std::string m);
   bool statetransferdone(std::string m);
+  bool donereq(std::string m, int &r);
   bool join(std::string m);
   void set_primary();
   std::string find_highest(viewstamp &vs, std::string &m, unsigned &vid);

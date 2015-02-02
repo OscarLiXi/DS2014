@@ -236,6 +236,13 @@ config::remove_wo(std::string m)
   return r;
 }
 
+bool config::remove(std::string m){
+  	assert(pthread_mutex_lock(&cfg_mutex)==0);
+	bool r = remove_wo(m);
+  	assert(pthread_mutex_unlock(&cfg_mutex)==0);
+	return r;
+}
+
 void
 config::heartbeater()
 {

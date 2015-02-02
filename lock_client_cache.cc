@@ -119,7 +119,8 @@ lock_client_cache::releaser()
 				//std::cout<<"releaser: statusNum2: "<<statusNum<<std::endl;
 				int r;
 				//calling extent_client to flush extents cache before lock release
-				//lu->dorelease(lid);
+				if(lu != NULL)
+					lu->dorelease(lid);
 				lock_protocol::status response = rsm_cl->call(lock_protocol::release, id, tempseqNum, lid, r);
 				if (response != lock_protocol::OK){
 					std::cout<<"Release failed!"<<std::endl;
