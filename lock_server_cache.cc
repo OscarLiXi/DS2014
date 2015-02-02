@@ -27,6 +27,8 @@ lock_server_cache::lock_server_cache(class rsm *_rsm)
 {
 
   rsm = _rsm;
+  
+  rsm->set_state_transfer(this);
 
   //Initialize the lock
   assert(pthread_mutex_init(&stateLock,0)==0);
