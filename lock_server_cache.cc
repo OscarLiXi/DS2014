@@ -329,6 +329,176 @@ lock_server_cache::retryer()
 	}
 }
 
+std::string 
+lock_server_cache::marshal_state()
+{
+	//Lock needed mutexes
+	pthread_mutex_lock(&stateLock);
+	pthread_mutex_lock(&waitListLock);
+	pthread_mutex_lock(&holderLock);
+	pthread_mutex_lock(&seqnumLock);
+	pthread_mutex_lock(&revokeLock.m);
+	pthread_mutex_lock(&retryLock.m);
+
+	marshall rep;
+	unsigned int size = 0;	
+
+	//marshal map<lock_protocol::lockid_t,std::string> lockToClient
+	size = lockToClient.size();
+	rep << size;
+	std::map<lock_protocol::lockid_t, std::string>::iterator it_lockToClient;
+	for (it_lockToClient = lockToClient.begin(); it_lockToClient != lockToClient.end(); it_lockToClient++){
+		lock_protocol::lockid_t lid = it_lockToClient->first;
+		std::string clid = lockToClient[lid];
+		rep << lid;
+		rep << clid;
+	}
+
+	//marshal list<lock_protocol::lockid_t> revokeList
+	size = revokeList.size();
+	rep << size;
+	std::list<lock_protocol::lockid_t>::iterator it_revokeList;
+	for (it_revokeList = revokeList.begin(); it_revokeList != revokeList.end(); it_revokeList++){
+		rep << *it_revokeList;
+	}
+
+	//marshal list<lock_protocol::lockid_t> retryList
+	size = retryList.size();
+	rep << size;
+	std::list<lock_protocol::lockid_t>::iterator it_retryList;
+	for (it_retryList = retryList.begin(); it_retryList != retryList.end(); it_retryList++){
+		rep << *it_retryList;
+	}
+
+	//marshal vector<retryMsg> waitList
+	size = waitList.size();
+	rep << size;
+	std::vector<retryMsg>::iterator it_waitList;
+	for (it_waitList = waitList.begin(); it_waitList != waitList.end(); it_waitList++){
+		retryMsg msg = *it_waitList;	
+		rep << msg.lid;
+		rep << msg.clientId;
+		rep << msg.seqNum;
+	}
+
+	//marshal map<std::pair<lock_protocol::lockid_t,std::string>, int> seqNumMap
+	size = seqNumMap.size();
+	rep << size;
+	std::map<std::pair<lock_protocol::lockid_t,std::string>, int>::iterator it_seqNumMap;
+	for (it_seqNumMap = seqNumMap.begin(); it_seqNumMap != seqNumMap.end(); it_seqNumMap++){
+		std::pair<lock_protocol::lockid_t,std::string> tempPair = it_seqNumMap->first;
+		rep << tempPair.first;
+		rep << tempPair.second;
+		rep << seqNumMap[tempPair];
+	}
+
+	//marshal map<lock_protocol::lockid_t,lock_t> locks
+	size = locks.size();
+	rep << size;
+	std::map<lock_protocol::lockid_t,lock_t>::iterator it_locks;
+	for (it_locks = locks.begin(); it_locks != locks.end(); it_locks ++){
+		lock_protocol::lockid_t lid = it_lockToClient->first;
+		rep << lid;
+		int lockStates = locks[lid].isLocked;
+		rep << lockStates;
+	}
+
+	//marshal done, unlock and return
+	pthread_mutex_unlock(&retryLock.m);
+	pthread_mutex_unlock(&revokeLock.m);
+	pthread_mutex_unlock(&seqnumLock);
+	pthread_mutex_unlock(&holderLock);
+	pthread_mutex_unlock(&waitListLock);
+	pthread_mutex_unlock(&stateLock);
+
+	return rep.str();
+}
+
+void 
+lock_server_cache::unmarshal_state(std::string state)
+{
+	pthread_mutex_lock(&stateLock);
+	pthread_mutex_lock(&waitListLock);
+	pthread_mutex_lock(&holderLock);
+	pthread_mutex_lock(&seqnumLock);
+	pthread_mutex_lock(&revokeLock.m);
+	pthread_mutex_lock(&retryLock.m);
+
+	unmarshall rep(state);
+	unsigned int size = 0;
+
+	//unmarshal map<lock_protocol::lockid_t,std::string> lockToClient
+	lockToClient.clear();
+	rep >> size;
+	for (unsigned int i = 0; i < size; i++){
+		lock_protocol::lockid_t lid;
+		rep >> lid;
+		std::string clid;
+		rep >> clid;
+		lockToClient[lid] = clid;
+	}
+
+	//unmarshal list<lock_protocol::lockid_t> revokeList
+	revokeList.clear();
+	rep >> size;
+	for (unsigned int i = 0; i < size; i++){
+		lock_protocol::lockid_t lid;
+		rep >> lid;
+		revokeList.push_back(lid);
+	}	
+
+	//unmarshal list<lock_protocol::lockid_t> retryList
+	retryList.clear();
+	rep >> size;
+	for (unsigned int i = 0; i < size; i++){
+		lock_protocol::lockid_t lid;
+		rep >> lid;
+		retryList.push_back(lid);
+	}
+
+	//unmarshal vector<retryMsg> waitList
+	waitList.clear();
+	rep >> size;
+	for (unsigned int i = 0; i < size; i++){
+		retryMsg msg;
+		rep >> msg.lid;
+		rep >> msg.clientId;
+		rep >> msg.seqNum;;
+		waitList.push_back(msg);
+	}
+
+	//unmarshal map<std::pair<lock_protocol::lockid_t,std::string>, int> seqNumMap
+	seqNumMap.clear();
+	rep >> size;
+	for (unsigned int i = 0; i < size; i++){
+		std::pair<lock_protocol::lockid_t,std::string> tempPair;
+		rep >> tempPair.first;
+		rep >> tempPair.second;
+		int seq;
+		rep >> seq;
+		seqNumMap[tempPair] = seq;
+	}
+
+	//unmarshal map<lock_protocol::lockid_t,lock_t> locks
+	locks.clear();
+	rep >> size;
+	for (unsigned int i = 0; i < size; i++){
+		lock_protocol::lockid_t lid;
+		rep >> lid;
+		lock_t lockState;
+		int locked;
+		rep >> locked;
+		lockState.isLocked = locked;
+		locks[lid] = lockState;
+	}
+
+	pthread_mutex_unlock(&retryLock.m);
+	pthread_mutex_unlock(&revokeLock.m);
+	pthread_mutex_unlock(&seqnumLock);
+	pthread_mutex_unlock(&holderLock);
+	pthread_mutex_unlock(&waitListLock);
+	pthread_mutex_unlock(&stateLock);
+}
 
 
 
