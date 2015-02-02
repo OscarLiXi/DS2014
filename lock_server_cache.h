@@ -2,11 +2,23 @@
 #define lock_server_cache_h
 
 #include <string>
+#include <lock_server.h>
 #include "lock_protocol.h"
 #include "rpc.h"
-#include "lock_server.h"
+#include "rsm_state_transfer.h"
 
 #include "rsm.h"
+
+struct lock_t{
+	lock_t(){
+		pthread_mutex_init(&m,NULL);
+		pthread_cond_init(&c,NULL);
+		isLocked = false;
+	}
+	pthread_mutex_t m;
+	pthread_cond_t c;
+	bool isLocked;
+};
 
 struct retryMsg{
 	lock_protocol::lockid_t lid;
@@ -14,9 +26,10 @@ struct retryMsg{
 	int seqNum;
 };
 
-class lock_server_cache : public lock_server {
+class lock_server_cache : public rsm_state_transfer{
  private:
   class rsm *rsm;
+  std::map<lock_protocol::lockid_t,lock_t> locks;
   std::map<lock_protocol::lockid_t,std::string> lockToClient;
   std::map<std::string, rpcc*> clientToRpcc;
   std::list<lock_protocol::lockid_t> revokeList;
@@ -40,6 +53,9 @@ class lock_server_cache : public lock_server {
   lock_protocol::status stat(lock_protocol::lockid_t, int &);
   lock_protocol::status acquire(std::string, int, lock_protocol::lockid_t , int &);
   lock_protocol::status release(std::string, int, lock_protocol::lockid_t , int &);
+
+  std::string marshal_state();
+  void unmarshal_state(std::string state);
 
   void revoker();
   void retryer();
