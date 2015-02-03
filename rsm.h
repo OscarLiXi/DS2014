@@ -5,6 +5,7 @@
 
 #include <string>
 #include <vector>
+#include <set>
 #include "rsm_protocol.h"
 #include "rsm_state_transfer.h"
 #include "rpc.h"
@@ -26,6 +27,7 @@ class rsm : public config_view_change {
   bool insync; 
   bool inviewchange;
   unsigned nbackup;
+  std::set<std::string> cur_members;
   // For testing purposes
   rpcs *testsvr;
   bool partitioned;

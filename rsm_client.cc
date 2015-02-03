@@ -31,7 +31,34 @@ rsm_client::rsm_client(std::string dst)
 void
 rsm_client::primary_failure()
 {
-  // For lab 8
+  	// For lab 8
+	if(known_mems.size() <= 1){
+		printf("rsm_client::primary_failure: do not know any member or only know the failed primary=%s\n",primary.id.c_str());
+		assert(0);
+	}
+	while(known_mems.size() > 0){
+		std::string new_primary = known_mems.back();
+		known_mems.pop_back();
+		if(new_primary == primary.id)
+			continue;
+	
+		sockaddr_in dstsock;
+		make_sockaddr(new_primary.c_str(), &dstsock);
+		primary.id = new_primary;
+		if(primary.cl){
+			assert(primary.nref == 0);
+			delete primary.cl;
+		}
+		primary.cl = new rpcc(dstsock);
+
+		if(primary.cl->bind(rpcc::to(1000)) < 0){
+			printf("rsm_client::primary_failure: cannot bind to new primary=%s\n, retry another one",new_primary.c_str());
+			continue;
+		}
+		if(!init_members(true))
+			continue;
+		break;
+	}
 }
 
 rsm_protocol::status

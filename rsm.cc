@@ -151,9 +151,9 @@ rsm::recovery()
 
   while(1){
     while(!cfg->ismember(cfg->myaddr())){
-		printf("rsm::recovery: before join\n");
     	if(join(primary)){
 			printf("recovery: joined\n");
+			inviewchange = true;
       	} 
 	  	else{
 			assert(pthread_mutex_unlock(&rsm_mutex)==0);
@@ -166,21 +166,21 @@ rsm::recovery()
 	if(inviewchange){
 		insync = true;
 		if(cfg->myaddr() == primary){
-			r = sync_with_backups();
-			if(!r)
+			if(!sync_with_backups())
 				printf("rsm::recovery: sync_with_backups() failed!\n");
 		}
 		else{
-			r = sync_with_primary();
-			if(!r)
+			if(!sync_with_primary())
 				printf("rsm::recovery: sync_with_primary() failed!\n");
 		}
+		myvs.vid = cfg->vid();
+		myvs.seqno = 1;
 	}	
-    if(r){ 
+    /*if(r){ 
 		inviewchange = false;
 		insync = false;
 		printf("rsm::recovery: sync succeed!\n");
-	}
+	}*/
 	//inviewchange = false;
     printf("recovery: go to sleep %d %d\n", insync, inviewchange);
     pthread_cond_wait(&recovery_cond, &rsm_mutex);
@@ -194,9 +194,11 @@ rsm::sync_with_backups(){
 	// For lab 8
 	printf("rsm::sync_with_backups: start to sync with backups\n");
 	std::vector<std::string> cur_view = cfg->get_curview();
-	while(cur_view.size() != nbackup)
-		pthread_cond_wait(&sync_cond,&rsm_mutex);	
-	nbackup = 0;
+	nbackup = cur_view.size() - 1;
+	cur_members.clear();
+	//while(cur_members.size() != nbackup)
+	//	pthread_cond_wait(&sync_cond,&rsm_mutex);	
+	//nbackup = 0;
 	return true;
 }
 
@@ -207,8 +209,10 @@ rsm::sync_with_primary()
   	// For lab 8
 	printf("rsm::synv_with_primary: start to sync with primary\n");
     if(statetransfer(primary)){
-		if(statetransferdone(primary))
+		if(statetransferdone(primary)){
+			printf("rsm::synv_with_primary: sync succeed!\n");
 			return true;
+		}
 	}
     return false;
 }
@@ -368,7 +372,7 @@ rsm::client_invoke(int procno, std::string req, std::string &r)
 		ret = rsm_client_protocol::NOTPRIMARY;
 		goto release;
 	}
-	vs = viewstamp(myvs.vid, myvs.seqno++);	
+	vs = viewstamp(myvs.vid, myvs.seqno);	
 	cur_view = cfg->get_curview();
 	//forward request to slaves, wait till receive OK from all the slaves
 	for(int i = 0; i < cur_view.size(); i++){
@@ -382,18 +386,24 @@ rsm::client_invoke(int procno, std::string req, std::string &r)
 				vs, req, r_dummy, rpcc::to(1000)) != rsm_client_protocol::OK ){
 				
 				printf("rsm::client_invoke: RPC failed!\n");
-				while(!cfg->remove(cur_view[i])) ;
-				continue;
+				//while(!cfg->remove(cur_view[i])) ;
+				//continue;
+				ret = rsm_client_protocol::BUSY;
+				goto release;
 			}
+		//	if(i==0)
+		//		breakpoint1();
 		}
 		else{
 			printf("rsm::client_invoke: get_rpcc() failed!\n");
-			while(!cfg->remove(cur_view[i])) ;
-			continue;
+			ret = rsm_client_protocol::BUSY;
+			goto release;
 		}
 	}
 	//execute request locally
 	r = execute(procno, req);
+	last_myvs = myvs;
+	myvs.seqno++;
 	printf("rsm::client_invoke: after execute()\n");
 release:
   	pthread_mutex_unlock(&invoke_mutex);
@@ -416,12 +426,13 @@ rsm::invoke(int proc, viewstamp vs, std::string req, int &dummy)
   		printf("rsm::invoke: not a slave in current view\n");
 		return rsm_client_protocol::ERR;
   	}
-	if(vs.seqno != last_myvs.seqno + 1){
+	if(vs != myvs){
 		printf("rsm::invoke: not an expected request\n");
 		return rsm_client_protocol::ERR;
 	}
 	execute(proc,req);
-	last_myvs = vs;
+	last_myvs = myvs;
+	myvs.seqno++;
   	return rsm_client_protocol::OK;
 }
 
@@ -452,11 +463,13 @@ rsm::transferdonereq(std::string m, int &r)
   	
 	assert (pthread_mutex_lock(&rsm_mutex) == 0);
 	// For lab 8
-	nbackup++;
-	std::vector<std::string> cur_view = cfg->get_curview();
-	printf("rsm::transferdonereq: transferdonereq from %s, nbackup=%d,cur_view.size=%d\n",m.c_str(),nbackup,cur_view.size());
-	if(cur_view.size()-1 == nbackup){
-		pthread_cond_signal(&sync_cond);
+	cur_members.insert(m);
+	printf("rsm::transferdonereq: transferdonereq from %s, nbackup=%d,cur_member.size=%d\n",m.c_str(),nbackup,cur_members.size());
+	if(cur_members.size() == nbackup){
+		//pthread_cond_signal(&sync_cond);
+		inviewchange = false;
+		insync = false;
+		printf("rsm::tranferdone: sync with bakcups done!\n");
 	}
   	assert (pthread_mutex_unlock(&rsm_mutex) == 0);
   	return ret;
