@@ -26,7 +26,6 @@ class rsm : public config_view_change {
   bool insync; 
   bool inviewchange;
   unsigned nbackup;
-
   // For testing purposes
   rpcs *testsvr;
   bool partitioned;
