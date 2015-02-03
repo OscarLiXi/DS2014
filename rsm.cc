@@ -391,8 +391,7 @@ rsm::client_invoke(int procno, std::string req, std::string &r)
 				ret = rsm_client_protocol::BUSY;
 				goto release;
 			}
-		//	if(i==0)
-		//		breakpoint1();
+			breakpoint1();
 		}
 		else{
 			printf("rsm::client_invoke: get_rpcc() failed!\n");
@@ -431,6 +430,7 @@ rsm::invoke(int proc, viewstamp vs, std::string req, int &dummy)
 		return rsm_client_protocol::ERR;
 	}
 	execute(proc,req);
+	breakpoint1();
 	last_myvs = myvs;
 	myvs.seqno++;
   	return rsm_client_protocol::OK;
